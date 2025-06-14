@@ -128,31 +128,36 @@ export default function UserAllReservationPage() {
         mode="user"
       />
   
-      {selectedDate && (
-        <div className={styles.detail}>
-          <p className={styles.dateTitle}>
-            {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
-          </p>
-  
-          {filteredReservations.length === 0 ? (
-            <p className={styles.noReservation}>この日に予約はありません</p>
-          ) : (
-            <ul className={styles.reservationList}>
-              {filteredReservations.map((r) => (
-                <li key={r.id} className={styles.reservationItem}>
-                  <div className={styles.reservationInfo}>
-                    <span className={styles.lessonMark}>◯</span>
-                    <span>{r.lessonName}：{r.time}（{getLessonTypeLabel(r.lessonType)}）</span>
-                  </div>
-                  <button onClick={() => handleDelete(r.id)} className={styles.deleteButton}>
-                    削除
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+            {selectedDate && (
+            <div className={styles.detail}>
+                <p className={styles.dateTitle}>
+                {selectedDate.getFullYear()}年
+                {selectedDate.getMonth() + 1}月
+                {selectedDate.getDate()}日
+                {filteredReservations.length > 0 && ` ${filteredReservations[0].time}`}
+                </p>
+
+                {filteredReservations.length === 0 ? (
+                <p className={styles.noReservation}>この日に予約はありません</p>
+                ) : (
+                <ul className={styles.reservationList}>
+                    {filteredReservations.map((r) => (
+                    <li key={r.id} className={styles.reservationItem}>
+                        <div className={styles.reservationInfo}>
+                        <span className={styles.lessonMark}>◯</span>
+                        <span>
+                            {r.lessonName}（{getLessonTypeLabel(r.lessonType)}）
+                        </span>
+                        </div>
+                        <button onClick={() => handleDelete(r.id)} className={styles.deleteButton}>
+                        削除
+                        </button>
+                    </li>
+                    ))}
+                </ul>
+                )}
+            </div>
+            )}
     </div>
   );
 }
