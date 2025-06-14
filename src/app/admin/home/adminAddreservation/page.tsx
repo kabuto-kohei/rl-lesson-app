@@ -1,7 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
@@ -16,8 +15,14 @@ import styles from './AdminAddReservation.module.css';
 import BackButton from "@/app/component/BackButton/BackButton";
 
 export default function AdminAddReservationPage() {
-  const searchParams = useSearchParams();
-  const teacherId = searchParams.get("teacherId");
+  const [teacherId, setTeacherId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setTeacherId(params.get('teacherId'));
+    }
+  }, []);
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
