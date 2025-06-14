@@ -11,7 +11,7 @@ import {
   doc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
-import Calendar from '@/app/component/Calendar/page';
+import Calendar from '@/app/component/Calendar/Calendar';
 import BackButton from "@/app/component/BackButton/BackButton";
 import styles from './AdminAllReservation.module.css';
 

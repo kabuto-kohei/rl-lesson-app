@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/firebase';
 import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import Calendar from '@/app/component/Calendar/page';
+import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
 import BackButton from '@/app/component/BackButton/BackButton';
 
