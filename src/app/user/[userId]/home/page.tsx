@@ -22,16 +22,16 @@ export default function UserHomePage() {
       <BackButton href={`/user/login`} />
       <div className={styles.inner}>
         <h1 className={styles.heading}>マイページ</h1>
-        <button className={styles.button} onClick={() => goTo('/home/userAddreservation')}>
+        <button className={`${styles.button} ${styles.reserveButton}`} onClick={() => goTo('/home/userAddreservation')}>
           スクール予約
         </button>
-        <button className={styles.button} onClick={() => goTo('/home/userAllreservation')}>
+        <button className={`${styles.button} ${styles.confirmButton}`} onClick={() => goTo('/home/userAllreservation')}>
           予約確認
         </button>
-        <button className={styles.button} onClick={() => goTo('/home/userMypage')}>
+        <button className={`${styles.button} ${styles.userInfoButton}`} onClick={() => goTo('/home/userMypage')}>
           ユーザー情報
         </button>
       </div>
     </div>
   );
-}
+}  

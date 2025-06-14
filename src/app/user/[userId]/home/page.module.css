@@ -37,7 +37,6 @@
   transition: background-color 0.2s;
 }
 
-/* 各ボタン個別色 */
 .reserveButton {
   background-color: #3b82f6; 
 }
