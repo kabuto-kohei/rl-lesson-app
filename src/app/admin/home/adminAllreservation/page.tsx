@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   collection,
   getDocs,
@@ -35,8 +34,14 @@ type User = {
 };
 
 export default function AdminAllReservationPage() {
-  const searchParams = useSearchParams();
-  const teacherId = searchParams.get('teacherId');
+  const [teacherId, setTeacherId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setTeacherId(params.get('teacherId'));
+    }
+  }, []);
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [bookingsMap, setBookingsMap] = useState<Record<string, string[]>>({});
