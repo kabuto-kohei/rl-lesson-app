@@ -13,10 +13,9 @@ export type CalendarProps = {
   goPrev: () => void;
   goNext: () => void;
   mode?: "user" | "admin";
-  teacherColorMap?: Record<string, string>; 
+  teacherColorMap?: Record<string, string[]>; // 修正: string から string[] に
   teacherId?: string;
   userId?: string;
-
 };
 
 export default function Calendar({
@@ -36,7 +35,6 @@ export default function Calendar({
     return mode === "admin" || availableDates.includes(dateStr);
   };
 
-  // lessonName → 色マップ
   const lessonColorPalette: Record<string, string> = {
     "れおスク": "#fca5a5",
     "そらスク": "#93c5fd",
@@ -75,30 +73,33 @@ export default function Calendar({
             .toString()
             .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
           const clickable = isThisMonth && isClickable(iso);
-          const isSelected =
-            selectedDate?.toDateString() === date.toDateString();
+          const isSelected = selectedDate?.toDateString() === date.toDateString();
           const isAvailable = availableDates.includes(iso);
-
-          const lessonName = teacherColorMap?.[iso] || "未設定";
-          const color = lessonColorPalette[lessonName] || "gray";
-
-          return (
+          const raw = teacherColorMap?.[iso];
+          const lessonNames = Array.isArray(raw) ? raw : [];
+          const circleColors = lessonNames.slice(0, 4).map(name => lessonColorPalette[name] || "gray");
+                    return (
             <div
               key={i}
-              className={`
-                ${styles.dateCell}
-                ${isSelected ? styles.selected : ""}
-                ${!clickable ? styles.disabled : ""}
-                ${!isThisMonth ? styles.outsideMonth : ""}
-              `}
+              className={
+                `${styles.dateCell} ` +
+                `${isSelected ? styles.selected : ""} ` +
+                `${!clickable ? styles.disabled : ""} ` +
+                `${!isThisMonth ? styles.outsideMonth : ""}`
+              }
               onClick={() => clickable && onDateSelect(date)}
             >
-              {date.getDate()}
+              <div>{date.getDate()}</div>
               {isAvailable && (
-                <div
-                  className={styles.circle}
-                  style={{ backgroundColor: color }}
-                />
+                <div className={styles.circleWrapper}>
+                  {circleColors.map((color, index) => (
+                    <div
+                      key={index}
+                      className={styles.circleSmall}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           );

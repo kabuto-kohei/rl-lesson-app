@@ -34,7 +34,7 @@ export default function UserAllReservationPage() {
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string>>({});
+  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -69,9 +69,12 @@ export default function UserAllReservationPage() {
       const filtered = results.filter((r): r is Reservation => r !== null);
       setReservations(filtered);
 
-      const map: Record<string, string> = {};
+      const map: Record<string, string[]> = {};
       filtered.forEach((r) => {
-        map[r.date] = r.lessonName || '未設定';
+        if (!map[r.date]) map[r.date] = [];
+        if (!map[r.date].includes(r.lessonName)) {
+          map[r.date].push(r.lessonName);
+        }
       });
       setLessonNameMap(map);
     };
@@ -121,15 +124,17 @@ export default function UserAllReservationPage() {
     try {
       await deleteDoc(doc(db, 'bookings', reservationId));
       alert('予約を削除しました');
-      setReservations((prev) => prev.filter((r) => r.id !== reservationId));
+      const updated = reservations.filter((r) => r.id !== reservationId);
+      setReservations(updated);
 
-      // 削除後に lessonNameMap を再構築
-      const updatedMap: Record<string, string> = {};
-      reservations
-        .filter((r) => r.id !== reservationId)
-        .forEach((r) => {
-          updatedMap[r.date] = r.lessonName || '未設定';
-        });
+      // lessonNameMap 再構築
+      const updatedMap: Record<string, string[]> = {};
+      updated.forEach((r) => {
+        if (!updatedMap[r.date]) updatedMap[r.date] = [];
+        if (!updatedMap[r.date].includes(r.lessonName)) {
+          updatedMap[r.date].push(r.lessonName);
+        }
+      });
       setLessonNameMap(updatedMap);
     } catch (error) {
       console.error('削除エラー:', error);

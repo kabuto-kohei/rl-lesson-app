@@ -118,6 +118,19 @@
     color: #ccc;
   }
   
+  .circleWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .circleSmall {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  
   @media (max-width: 768px) {
     .wrapper {
       padding: 16px;

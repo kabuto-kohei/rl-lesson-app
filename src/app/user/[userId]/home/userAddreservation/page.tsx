@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { collection, getDocs, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  Timestamp,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
@@ -14,6 +21,8 @@ type Schedule = {
   time: string;
   lessonType: string;
   teacherId: string;
+  capacity: number;
+  memo?: string;
 };
 
 export default function UserAddReservationPage() {
@@ -25,8 +34,9 @@ export default function UserAddReservationPage() {
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [lessonName, setLessonName] = useState<string | null>(null);
-  const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string>>({});
+  const [lessonNameById, setLessonNameById] = useState<Record<string, string>>({});
+  const [classTypeById, setClassTypeById] = useState<Record<string, string>>({});
+  const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -34,37 +44,39 @@ export default function UserAddReservationPage() {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Schedule[];
       setSchedules(data);
 
-      const map: Record<string, string> = {};
+      const lessonMap: Record<string, Set<string>> = {};
+      const nameMap: Record<string, string> = {};
+      const typeMap: Record<string, string> = {};
+
       for (const s of data) {
         const teacherRef = doc(db, 'teacherId', s.teacherId);
         const teacherSnap = await getDoc(teacherRef);
-        const lesson = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
-        map[s.date] = lesson;
+        const teacherData = teacherSnap.exists() ? teacherSnap.data() : {};
+        const lesson = teacherData.lessonName || '未設定';
+        const classType = teacherData.ClassType || '未設定';
+      
+        nameMap[s.teacherId] = lesson;
+        typeMap[s.teacherId] = classType;
+      
+        // ★ マスタークラスのスケジュールのみ地図に登録
+        if (classType === 'マスタークラス') {
+          if (!lessonMap[s.date]) lessonMap[s.date] = new Set();
+          lessonMap[s.date].add(lesson);
+        }
       }
-      setDateToLessonNameMap(map);
+      
+      const finalMap: Record<string, string[]> = {};
+      Object.entries(lessonMap).forEach(([date, set]) => {
+        finalMap[date] = Array.from(set);
+      });
+
+      setLessonNameById(nameMap);
+      setClassTypeById(typeMap);
+      setDateToLessonNameMap(finalMap);
     };
+
     fetchSchedules();
   }, []);
-
-  useEffect(() => {
-    const fetchLessonName = async () => {
-      if (!selectedDate) return;
-      const selectedDateStr = formatDate(selectedDate);
-      const matchedSchedule = schedules.find(s => s.date === selectedDateStr);
-      if (!matchedSchedule) {
-        setLessonName(null);
-        return;
-      }
-      const teacherRef = doc(db, 'teacherId', matchedSchedule.teacherId);
-      const teacherSnap = await getDoc(teacherRef);
-      if (teacherSnap.exists()) {
-        setLessonName(teacherSnap.data().lessonName || null);
-      } else {
-        setLessonName(null);
-      }
-    };
-    fetchLessonName();
-  }, [selectedDate, schedules]);
 
   const formatDate = (date: Date): string => {
     const yyyy = date.getFullYear();
@@ -74,7 +86,16 @@ export default function UserAddReservationPage() {
   };
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
-  const dailySchedules = schedules.filter(s => s.date === selectedDateStr);
+  const allMatchingSchedules = schedules.filter(s => s.date === selectedDateStr);
+  const dailySchedules = allMatchingSchedules.filter(s => classTypeById[s.teacherId] === 'マスタークラス');
+
+  const groupedSchedules: Record<string, Schedule[]> = {};
+  for (const schedule of dailySchedules) {
+    if (!groupedSchedules[schedule.teacherId]) {
+      groupedSchedules[schedule.teacherId] = [];
+    }
+    groupedSchedules[schedule.teacherId].push(schedule);
+  }
 
   const goPrev = () => {
     const prev = new Date(year, month - 1);
@@ -125,38 +146,58 @@ export default function UserAddReservationPage() {
       <BackButton href={`/user/${userId}/home`} />
       <h1 className={styles.heading}>スクール予約</h1>
       <p className={styles.subheading}>マスタークラスの予約カレンダーになります。</p>
+
       <Calendar
         year={year}
         month={month}
         selectedDate={selectedDate}
         availableDates={Object.keys(dateToLessonNameMap)}
-        teacherColorMap={dateToLessonNameMap} 
+        teacherColorMap={dateToLessonNameMap}
         onDateSelect={setSelectedDate}
         goPrev={goPrev}
         goNext={goNext}
         mode="user"
       />
+
       {selectedDate && (
         <div className={styles.detail}>
-          {lessonName && (
-            <p className={styles.lessonName}>担当スクール：{lessonName}</p>
-          )}
           <p>選択日: {selectedDate.toLocaleDateString()}</p>
+          <p>※「マスタークラス」のみ表示</p>
           {dailySchedules.length === 0 ? (
             <p>この日に予約枠はありません</p>
           ) : (
-            dailySchedules.map(s => (
-              <div key={s.id} className={styles.slot}>
-                <p>時間：{s.time}</p>
-                <p>種別：{getLessonTypeLabel(s.lessonType)}</p>
-                <button
-                  className={styles.reserveButton}
-                  onClick={() => handleReserve(s.id)}
-                >
-                  予約
-                </button>
-              </div>
-            ))
+            <div className={styles.groupedList}>
+              {Object.entries(groupedSchedules).map(([teacherId, scheduleList]) => (
+                <div key={teacherId} className={styles.teacherGroup}>
+                  <h3 className={styles.teacherName}>
+                    {lessonNameById[teacherId] || '講師名未設定'}
+                  </h3>
+                  <ul className={styles.scheduleList}>
+                    {scheduleList.map((s) => (
+                      <li key={s.id} className={styles.reservationItem}>
+                      <div className={styles.reservationInfo}>
+                        <div className={styles.lessonType}>
+                          {getLessonTypeLabel(s.lessonType)}
+                        </div>
+                        <div className={styles.timeAndCapacity}>
+                          {s.time}｜定員：{s.capacity}
+                        </div>
+                        {s.memo && (
+                          <div className={styles.memo}>メモ：{s.memo}</div>
+                        )}
+                      </div>
+                      <button
+                        className={styles.reserveButton}
+                        onClick={() => handleReserve(s.id)}
+                      >
+                        予約
+                      </button>
+                    </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

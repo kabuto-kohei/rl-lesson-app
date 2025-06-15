@@ -39,7 +39,7 @@ export default function UserClassSelectPage() {
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string>>({});
+  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -79,18 +79,21 @@ export default function UserClassSelectPage() {
     })) as Schedule[];
     setSchedules(scheduleList);
 
-    const lessonMap: Record<string, string> = {};
+    const tempMap: Record<string, Set<string>> = {};
     for (const s of scheduleList) {
       const teacherRef = doc(db, 'teacherId', s.teacherId);
       const teacherSnap = await getDoc(teacherRef);
       const lessonName = teacherSnap.exists()
         ? teacherSnap.data().lessonName || '未設定'
         : '未設定';
-      if (!lessonMap[s.date]) {
-        lessonMap[s.date] = lessonName;
-      }
+      if (!tempMap[s.date]) tempMap[s.date] = new Set();
+      tempMap[s.date].add(lessonName);
     }
-    setLessonNameMap(lessonMap);
+    const finalMap: Record<string, string[]> = {};
+    Object.entries(tempMap).forEach(([date, set]) => {
+      finalMap[date] = Array.from(set);
+    });
+    setLessonNameMap(finalMap);
   };
 
   const formatDate = (date: Date): string => {
@@ -101,18 +104,16 @@ export default function UserClassSelectPage() {
   };
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
-  const filteredSchedules = schedules.filter((s) => s.date === selectedDateStr);
+  const filteredSchedules = schedules
+  .filter((s) => s.date === selectedDateStr)
+  .sort((a, b) => a.time.localeCompare(b.time));
 
   const getLessonTypeLabel = (type: string) => {
     switch (type) {
-      case 'boulder':
-        return 'ボルダー';
-      case 'lead':
-        return 'リード';
-      case 'both':
-        return 'ボルダー・リード';
-      default:
-        return '不明';
+      case 'boulder': return 'ボルダー';
+      case 'lead': return 'リード';
+      case 'both': return 'ボルダー・リード';
+      default: return '不明';
     }
   };
 
@@ -120,8 +121,8 @@ export default function UserClassSelectPage() {
     const map: Record<string, string> = {
       'れおスク': '#fca5a5',
       'そらスク': '#93c5fd',
-      "かぶスク": "#fcd34d",
-      "おーらんスクール": "#34d399",  
+      'かぶスク': '#fcd34d',
+      'おーらんスクール': '#34d399',
       '未設定': 'gray',
     };
     return map[lessonName] || '#ccc';
@@ -141,7 +142,7 @@ export default function UserClassSelectPage() {
 
   return (
     <div className={styles.container}>
-        <BackButton href={`/user/${userId}/home`} />
+      <BackButton href={`/user/${userId}/home`} />
       <h2 className={styles.heading}>クラスを選択してください</h2>
       <select
         value={selectedTeacherId}
@@ -181,7 +182,7 @@ export default function UserClassSelectPage() {
 
           {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
             <div className={styles.legend}>
-              {Array.from(new Set(Object.values(lessonNameMap))).map((lessonName, idx) => {
+              {Array.from(new Set(Object.values(lessonNameMap).flat())).map((lessonName, idx) => {
                 const color = getColorForLesson(lessonName);
                 return (
                   <div key={idx} className={styles.legendItem}>
@@ -197,29 +198,25 @@ export default function UserClassSelectPage() {
             <div className={styles.detail}>
               <p className={styles.dateTitle}>
                 {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
-                {filteredSchedules.length > 0 && `   ${filteredSchedules[0].time}`}
               </p>
 
               {filteredSchedules.length === 0 ? (
                 <p className={styles.noReservation}>この日のスケジュールはありません</p>
               ) : (
                 <ul className={styles.reservationList}>
-                  {filteredSchedules.map((s) => {
-
-                    return (
-                      <li key={s.id} className={styles.reservationItem}>
-                        <div className={styles.reservationInfo}>
-                          <span className={styles.lessonMark}>◯</span>
-                          <div className={styles.lessonContent}>
-                            <div>
-                              {lessonNameMap[s.date]}（{getLessonTypeLabel(s.lessonType)}）｜定員：{s.capacity}
-                            </div>
-                            {s.memo && <div className={styles.memo}>メモ：{s.memo}</div>}
-                          </div>
+                  {filteredSchedules.map((s) => (
+                    <li key={s.id} className={styles.reservationItem}>
+                      <div className={styles.reservationInfo}>
+                        <div className={styles.timeAndCapacity}>
+                          {s.time}｜定員：{s.capacity}
                         </div>
-                      </li>
-                    );
-                  })}
+                        <div className={styles.lessonType}>
+                         {getLessonTypeLabel(s.lessonType)}
+                        </div>
+                        {s.memo && <div className={styles.memo}>メモ：{s.memo}</div>}
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>

@@ -124,3 +124,13 @@
     color: #374151;
   }
   
+  .timeAndCapacity {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  
+  .lessonType {
+    font-size: 13px;
+    color: #555;
+  }

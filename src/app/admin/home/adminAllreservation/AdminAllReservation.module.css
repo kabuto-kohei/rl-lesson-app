@@ -11,7 +11,7 @@
   text-align: center;
 }
 
-/* カレンダー下に表示される凡例（色付き◯の説明） */
+/* カレンダー下に表示される凡例 */
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -34,7 +34,7 @@
   margin-right: 6px;
 }
 
-/* 詳細表示エリア */
+/* 詳細エリア */
 .detail {
   margin-top: 24px;
 }
@@ -66,30 +66,26 @@
 }
 
 .reservationInfo {
-  font-size: 14px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.lessonMark {
-  font-size: 16px;
-  color: #000;
-}
-
-.lessonContent {
-  margin-left: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+
+.lessonName {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.timeAndCapacity {
+  font-size: 14px;
 }
 
 .createdAt {
-  font-size: 0.85rem;
+  font-size: 12px;
   color: #888;
 }
 
 .memo {
-  font-size: 0.85rem;
+  font-size: 13px;
   color: #444;
 }

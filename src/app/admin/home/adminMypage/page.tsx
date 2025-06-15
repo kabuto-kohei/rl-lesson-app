@@ -49,7 +49,7 @@ export default function AdminAllReservationPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [bookingsMap, setBookingsMap] = useState<Record<string, string[]>>({});
   const [userMap, setUserMap] = useState<Record<string, string>>({});
-  const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string>>({});
+  const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string[]>>({});
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -68,15 +68,21 @@ export default function AdminAllReservationPage() {
       })) as Schedule[];
       setSchedules(scheduleList);
 
-      const map: Record<string, string> = {};
+      const map: Record<string, Set<string>> = {};
       for (const s of scheduleList) {
         const teacherRef = doc(db, 'teacherId', s.teacherId);
         const teacherSnap = await getDoc(teacherRef);
         const lesson = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
-        map[s.date] = lesson;
+      
+        if (!map[s.date]) map[s.date] = new Set();
+        map[s.date].add(lesson);
       }
-      setDateToLessonNameMap(map);
-
+      const lessonNameArrayMap: Record<string, string[]> = {};
+      Object.entries(map).forEach(([date, set]) => {
+        lessonNameArrayMap[date] = Array.from(set);
+      });
+      setDateToLessonNameMap(lessonNameArrayMap);
+      
       const bookingSnap = await getDocs(collection(db, 'bookings'));
       const bookings = bookingSnap.docs.map(doc => doc.data() as Booking);
 

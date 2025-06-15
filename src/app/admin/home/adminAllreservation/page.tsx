@@ -10,9 +10,10 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
-import BackButton from "@/app/component/BackButton/BackButton";
+import BackButton from '@/app/component/BackButton/BackButton';
 import styles from './AdminAllReservation.module.css';
 
+// 型定義
 type Schedule = {
   id: string;
   date: string;
@@ -27,7 +28,8 @@ type Schedule = {
 export default function AdminAllReservationPage() {
   const [teacherId, setTeacherId] = useState('');
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string>>({});
+  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
+  const [lessonNameById, setLessonNameById] = useState<Record<string, string>>({});
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -37,50 +39,45 @@ export default function AdminAllReservationPage() {
   const lessonNameColorMap: Record<string, string> = {
     'れおスク': '#fca5a5',
     'そらスク': '#93c5fd',
-    "かぶスク": "#fcd34d",
-    "おーらんスクール": "#34d399",
-    '未設定': 'gray',
-  };
-
-  const getColorForLesson = (lessonName: string): string => {
-    return lessonNameColorMap[lessonName] || '#ccc';
+    'かぶスク': '#fcd34d',
+    'おーらんスクール': '#34d399',
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('teacherId');
-      if (id) setTeacherId(id);
-    }
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('teacherId');
+    if (id) setTeacherId(id);
   }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, 'lessonSchedules'));
-        const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Schedule[];
-        setSchedules(scheduleList);
+      const snapshot = await getDocs(collection(db, 'lessonSchedules'));
+      const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Schedule[];
+      setSchedules(scheduleList);
 
-        const lessonMap: Record<string, string> = {};
-        for (const s of scheduleList) {
-          const teacherRef = doc(db, 'teacherId', s.teacherId);
-          const teacherSnap = await getDoc(teacherRef);
-          const lessonName = teacherSnap.exists()
-            ? teacherSnap.data().lessonName || '未設定'
-            : '未設定';
-          if (!lessonMap[s.date]) {
-            lessonMap[s.date] = lessonName;
-          }
-        }
-        setLessonNameMap(lessonMap);
-      } catch (err) {
-        console.error('データ取得エラー:', err);
+      const lessonMap: Record<string, Set<string>> = {};
+      const lessonById: Record<string, string> = {};
+
+      for (const s of scheduleList) {
+        const teacherRef = doc(db, 'teacherId', s.teacherId);
+        const teacherSnap = await getDoc(teacherRef);
+        const lessonName = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
+
+        lessonById[s.teacherId] = lessonName;
+        if (!lessonMap[s.date]) lessonMap[s.date] = new Set();
+        lessonMap[s.date].add(lessonName);
       }
-    };
 
+      const finalMap: Record<string, string[]> = {};
+      Object.entries(lessonMap).forEach(([date, set]) => {
+        finalMap[date] = Array.from(set);
+      });
+      setLessonNameMap(finalMap);
+      setLessonNameById(lessonById);
+    };
     fetchData();
   }, []);
 
@@ -92,18 +89,16 @@ export default function AdminAllReservationPage() {
   };
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
-  const filteredSchedules = schedules.filter((s) => s.date === selectedDateStr);
+  const filteredSchedules = schedules
+    .filter(s => s.date === selectedDateStr)
+    .sort((a, b) => a.time.localeCompare(b.time));
 
   const getLessonTypeLabel = (type: string) => {
     switch (type) {
-      case 'boulder':
-        return 'ボルダー';
-      case 'lead':
-        return 'リード';
-      case 'both':
-        return 'ボルダー・リード';
-      default:
-        return '不明';
+      case 'boulder': return 'ボルダー';
+      case 'lead': return 'リード';
+      case 'both': return 'ボルダー・リード';
+      default: return '不明';
     }
   };
 
@@ -136,28 +131,21 @@ export default function AdminAllReservationPage() {
         mode="admin"
       />
 
-      {/* 凡例表示 */}
-      {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
-        <div className={styles.legend}>
-          {Array.from(new Set(Object.values(lessonNameMap))).map((lessonName, idx) => {
-            const color = getColorForLesson(lessonName);
-            return (
-              <div key={idx} className={styles.legendItem}>
-                <span className={styles.circle} style={{ backgroundColor: color }} />
-                ：{lessonName}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <div className={styles.legend}>
+        {Object.values(lessonNameColorMap).map((color, idx) => {
+          const name = Object.keys(lessonNameColorMap)[idx];
+          return (
+            <div key={idx} className={styles.legendItem}>
+              <span className={styles.circle} style={{ backgroundColor: color }} />：{name}
+            </div>
+          );
+        })}
+      </div>
 
-      {/* 詳細表示 */}
       {selectedDate && (
         <div className={styles.detail}>
           <p className={styles.dateTitle}>
-            {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月
-            {selectedDate.getDate()}日
-            {filteredSchedules.length > 0 && `   ${filteredSchedules[0].time}`}
+            {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
           </p>
 
           {filteredSchedules.length === 0 ? (
@@ -177,17 +165,21 @@ export default function AdminAllReservationPage() {
 
                 return (
                   <li key={s.id} className={styles.reservationItem}>
-                  <div className={styles.reservationInfo}>
-                    <span className={styles.lessonMark}>◯</span>
-                    <div className={styles.lessonContent}>
-                      <div>
-                        {lessonNameMap[s.date]}（{getLessonTypeLabel(s.lessonType)}）｜定員：{s.capacity}
+                    <div className={styles.reservationInfo}>
+                      <div className={styles.lessonName}>
+                        {lessonNameById[s.teacherId]}（{getLessonTypeLabel(s.lessonType)}）
                       </div>
-                      <div className={styles.createdAt}>作成日時：{createdAtStr}</div>
-                      {s.memo && <div className={styles.memo}>メモ：{s.memo}</div>}
+                      <div className={styles.timeAndCapacity}>
+                        {s.time}｜定員：{s.capacity}
+                      </div>
+                      <div className={styles.createdAt}>
+                        作成日時：{createdAtStr}
+                      </div>
+                      {s.memo && (
+                        <div className={styles.memo}>メモ：{s.memo}</div>
+                      )}
                     </div>
-                  </div>
-                </li>
+                  </li>
                 );
               })}
             </ul>
@@ -197,3 +189,4 @@ export default function AdminAllReservationPage() {
     </div>
   );
 }
+
