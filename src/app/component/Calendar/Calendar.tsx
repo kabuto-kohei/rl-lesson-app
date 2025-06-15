@@ -13,6 +13,7 @@ export type CalendarProps = {
   goPrev: () => void;
   goNext: () => void;
   mode?: "user" | "admin";
+  teacherColorMap?: Record<string, string>; 
 };
 
 export default function Calendar({
@@ -24,6 +25,7 @@ export default function Calendar({
   goPrev,
   goNext,
   mode = "user",
+  teacherColorMap = {},
 }: CalendarProps) {
   const dates = getCalendarMatrix(year, month);
 
@@ -31,12 +33,20 @@ export default function Calendar({
     return mode === "admin" || availableDates.includes(dateStr);
   };
 
+  // lessonName → 色マップ
+  const lessonColorPalette: Record<string, string> = {
+    "れおスク": "#fca5a5",
+    "そらスク": "#93c5fd",
+    "未設定": "gray",
+  };
+
   return (
     <div className={styles.wrapper}>
-      {/* 月ナビゲーション表示 */}
       <div className={styles.nav}>
         <button onClick={goPrev}>＜</button>
-        <span className={styles.monthLabel}>{year}年 {month + 1}月</span>
+        <span className={styles.monthLabel}>
+          {year}年 {month + 1}月
+        </span>
         <button onClick={goNext}>＞</button>
       </div>
 
@@ -58,10 +68,14 @@ export default function Calendar({
           const isThisMonth = date.getMonth() === month;
           const iso = `${date.getFullYear()}-${(date.getMonth() + 1)
             .toString()
-            .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;          
+            .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
           const clickable = isThisMonth && isClickable(iso);
-          const isSelected = selectedDate?.toDateString() === date.toDateString();
+          const isSelected =
+            selectedDate?.toDateString() === date.toDateString();
           const isAvailable = availableDates.includes(iso);
+
+          const lessonName = teacherColorMap?.[iso] || "未設定";
+          const color = lessonColorPalette[lessonName] || "gray";
 
           return (
             <div
@@ -75,8 +89,13 @@ export default function Calendar({
               onClick={() => clickable && onDateSelect(date)}
             >
               {date.getDate()}
-              {isAvailable && <div className={styles.circle}></div>}
-              </div>
+              {isAvailable && (
+                <div
+                  className={styles.circle}
+                  style={{ backgroundColor: color }}
+                />
+              )}
+            </div>
           );
         })}
       </div>

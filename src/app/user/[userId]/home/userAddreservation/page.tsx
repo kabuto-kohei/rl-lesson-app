@@ -8,7 +8,6 @@ import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
 import BackButton from '@/app/component/BackButton/BackButton';
 
-
 type Schedule = {
   id: string;
   date: string;
@@ -18,25 +17,31 @@ type Schedule = {
 };
 
 export default function UserAddReservationPage() {
-    const params = useParams();
-    const userId = typeof params.userId === 'string' ? params.userId : '';
-
+  const params = useParams();
+  const userId = typeof params.userId === 'string' ? params.userId : '';
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [lessonName, setLessonName] = useState<string | null>(null);
+  const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchSchedules = async () => {
       const snapshot = await getDocs(collection(db, 'lessonSchedules'));
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Schedule[];
       setSchedules(data);
-      const dates = [...new Set(data.map(s => s.date))];
-      setAvailableDates(dates);
+
+      const map: Record<string, string> = {};
+      for (const s of data) {
+        const teacherRef = doc(db, 'teacherId', s.teacherId);
+        const teacherSnap = await getDoc(teacherRef);
+        const lesson = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
+        map[s.date] = lesson;
+      }
+      setDateToLessonNameMap(map);
     };
     fetchSchedules();
   }, []);
@@ -117,13 +122,14 @@ export default function UserAddReservationPage() {
 
   return (
     <div className={styles.container}>
-        <BackButton href={`/user/${userId}/home`} />
+      <BackButton href={`/user/${userId}/home`} />
       <h1 className={styles.heading}>スクール予約</h1>
       <Calendar
         year={year}
         month={month}
         selectedDate={selectedDate}
-        availableDates={availableDates}
+        availableDates={Object.keys(dateToLessonNameMap)}
+        teacherColorMap={dateToLessonNameMap} 
         onDateSelect={setSelectedDate}
         goPrev={goPrev}
         goNext={goNext}

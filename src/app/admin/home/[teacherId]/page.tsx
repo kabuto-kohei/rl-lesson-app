@@ -55,6 +55,17 @@ export default function AdminHomeTeacherPage() {
       >
         予約一覧
       </button>
+
+      <button
+        className={`${styles["admin-button"]} ${styles.list}`}
+        onClick={() =>
+          teacherId &&
+          typeof teacherId === 'string' &&
+          window.location.assign(`/admin/home/adminMypage?teacherId=${teacherId}`)
+        }
+      >
+        マイページ
+      </button>
     </div>
   </div>
 </main>

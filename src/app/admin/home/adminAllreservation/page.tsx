@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   collection,
   getDocs,
-  query,
-  where,
-  deleteDoc,
   doc,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -21,163 +20,146 @@ type Schedule = {
   capacity: number;
   lessonType: string;
   memo?: string;
-};
-
-type Booking = {
-  scheduleId: string;
-  userId: string;
-};
-
-type User = {
-  id: string;
-  name: string;
+  teacherId: string;
 };
 
 export default function AdminAllReservationPage() {
-  const [teacherId, setTeacherId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      setTeacherId(params.get('teacherId'));
-    }
-  }, []);
-
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [bookingsMap, setBookingsMap] = useState<Record<string, string[]>>({});
-  const [userMap, setUserMap] = useState<Record<string, string>>({});
+  const searchParams = useSearchParams();
+  const teacherId = searchParams.get('teacherId') || '';
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string>>({});
+
+  const lessonNameColorMap: Record<string, string> = {
+    'れおスク': '#fca5a5',
+    'そらスク': '#93c5fd',
+    '未設定': 'gray',
+  };
+
+  const getColorForLesson = (lessonName: string): string => {
+    return lessonNameColorMap[lessonName] || '#ccc';
+  };
 
   useEffect(() => {
-    if (!teacherId) return;
-
     const fetchData = async () => {
-      const q = query(collection(db, 'lessonSchedules'), where('teacherId', '==', teacherId));
-      const snapshot = await getDocs(q);
-
+      const snapshot = await getDocs(collection(db, 'lessonSchedules'));
       const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Schedule[];
       setSchedules(scheduleList);
 
-      const bookingSnap = await getDocs(collection(db, 'bookings'));
-      const bookings = bookingSnap.docs.map(doc => doc.data() as Booking);
-
-      const bookingsGrouped: Record<string, string[]> = {};
-      bookings.forEach(b => {
-        if (!bookingsGrouped[b.scheduleId]) bookingsGrouped[b.scheduleId] = [];
-        bookingsGrouped[b.scheduleId].push(b.userId);
-      });
-      setBookingsMap(bookingsGrouped);
-
-      const userSnap = await getDocs(collection(db, 'users'));
-      const userMapTemp: Record<string, string> = {};
-      userSnap.docs.forEach(doc => {
-        const user = doc.data() as User;
-        userMapTemp[doc.id] = user.name;
-      });
-      setUserMap(userMapTemp);
+      const lessonMap: Record<string, string> = {};
+      for (const s of scheduleList) {
+        const teacherRef = doc(db, 'teacherId', s.teacherId);
+        const teacherSnap = await getDoc(teacherRef);
+        const lessonName = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
+        lessonMap[s.date] = lessonName;
+      }
+      setLessonNameMap(lessonMap);
     };
 
     fetchData();
-  }, [teacherId]);
+  }, []);
 
-  const handleDeleteSchedule = async (scheduleId: string) => {
-    if (!window.confirm('この予約枠を削除しますか？')) return;
+  const formatDate = (date: Date): string => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
-    try {
-      await deleteDoc(doc(db, 'lessonSchedules', scheduleId));
-      setSchedules(prev => prev.filter(s => s.id !== scheduleId));
-      alert('削除しました');
-    } catch (error) {
-      console.error('削除エラー:', error);
-      alert('削除に失敗しました');
+  const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
+  const filteredSchedules = schedules.filter((s) => s.date === selectedDateStr);
+
+  const getLessonTypeLabel = (type: string) => {
+    switch (type) {
+      case 'boulder':
+        return 'ボルダー';
+      case 'lead':
+        return 'リード';
+      case 'both':
+        return 'ボルダー・リード';
+      default:
+        return '不明';
     }
   };
 
-  const sortedSchedules = schedules.sort((a, b) => a.date.localeCompare(b.date));
-  const reservedDates = [...new Set(schedules.map(s => s.date))];
+  const goPrev = () => {
+    const prev = new Date(year, month - 1);
+    setYear(prev.getFullYear());
+    setMonth(prev.getMonth());
+  };
+
+  const goNext = () => {
+    const next = new Date(year, month + 1);
+    setYear(next.getFullYear());
+    setMonth(next.getMonth());
+  };
 
   return (
-    <main className={styles.container}>
+    <div className={styles.container}>
       <BackButton href={`/admin/home/${teacherId}`} />
-      <h1 className={styles.heading}>予約一覧</h1>
+      <h1 className={styles.heading}>全講師の予約一覧</h1>
 
-      <div className={styles.calendarWrapper}>
-        <Calendar
-          year={year}
-          month={month}
-          selectedDate={null}
-          availableDates={reservedDates}
-          onDateSelect={() => {}}
-          goPrev={() => {
-            if (month === 0) {
-              setYear(y => y - 1);
-              setMonth(11);
-            } else {
-              setMonth(m => m - 1);
-            }
-          }}
-          goNext={() => {
-            if (month === 11) {
-              setYear(y => y + 1);
-              setMonth(0);
-            } else {
-              setMonth(m => m + 1);
-            }
-          }}
-          mode="admin"
-        />
-      </div>
+      <Calendar
+        year={year}
+        month={month}
+        selectedDate={selectedDate}
+        availableDates={Object.keys(lessonNameMap)}
+        teacherColorMap={lessonNameMap}
+        onDateSelect={setSelectedDate}
+        goPrev={goPrev}
+        goNext={goNext}
+        mode="admin"
+      />
 
-      {sortedSchedules.map((s) => {
-        const participants = bookingsMap[s.id] || [];
-        const participantNames = participants.map(uid => userMap[uid] || '名前不明');
+      {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
+        <div className={styles.legend}>
+          {Array.from(new Set(Object.values(lessonNameMap))).map((lessonName, idx) => {
+            const color = getColorForLesson(lessonName);
+            return (
+              <div key={idx} className={styles.legendItem}>
+                <span className={styles.circle} style={{ backgroundColor: color }} />
+                ：{lessonName}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-        return (
-          <div key={s.id} className={styles.card}>
-            <h2 className={styles.date}>
-              📝 {formatDate(s.date)}
-              <button
-                className={styles.deleteButton}
-                onClick={() => handleDeleteSchedule(s.id)}
-              >
-                削除
-              </button>
-            </h2>
-            <p className={styles.detail}>
-              時間：{s.time}（定員{s.capacity}）{getLessonTypeLabel(s.lessonType)}
-              {s.memo && `｜メモ：${s.memo}`}
-            </p>
-            <p className={styles.label}>参加者：</p>
-            <ul className={styles.participants}>
-              {participantNames.length > 0 ? (
-                participantNames.map((name, idx) => <li key={idx}>・{name}</li>)
-              ) : (
-                <li>なし</li>
-              )}
+      {selectedDate && (
+        <div className={styles.detail}>
+          <p className={styles.dateTitle}>
+            {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月
+            {selectedDate.getDate()}日
+            {filteredSchedules.length > 0 && `   ${filteredSchedules[0].time}`}
+          </p>
+
+          {filteredSchedules.length === 0 ? (
+            <p className={styles.noReservation}>この日の予約はありません</p>
+          ) : (
+            <ul className={styles.reservationList}>
+              {filteredSchedules.map((s) => (
+                <li key={s.id} className={styles.reservationItem}>
+                  <div className={styles.reservationInfo}>
+                    <span className={styles.lessonMark}>◯</span>
+                    <span>
+                      {lessonNameMap[s.date]}（{getLessonTypeLabel(s.lessonType)}）｜定員：{s.capacity}
+                      {s.memo ? `｜メモ：${s.memo}` : ''}
+                    </span>
+                  </div>
+                </li>
+              ))}
             </ul>
-          </div>
-        );
-      })}
-    </main>
+          )}
+        </div>
+      )}
+    </div>
   );
-}
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
-}
-
-function getLessonTypeLabel(type: string) {
-  switch (type) {
-    case 'boulder': return 'ボルダー';
-    case 'lead': return 'リード';
-    case 'both': return '両方';
-    default: return '';
-  }
 }
