@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   collection,
   getDocs,
@@ -24,8 +24,8 @@ type Schedule = {
 };
 
 export default function AdminAllReservationPage() {
-  const params = useParams();
-  const teacherId = typeof params.teacherId === 'string' ? params.teacherId : '';
+  const searchParams = useSearchParams();
+  const teacherId = searchParams.get('teacherId') || '';
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -163,4 +163,3 @@ export default function AdminAllReservationPage() {
     </div>
   );
 }
-
