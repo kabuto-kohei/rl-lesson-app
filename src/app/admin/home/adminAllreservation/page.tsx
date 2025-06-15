@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   collection,
   getDocs,
@@ -24,16 +23,14 @@ type Schedule = {
 };
 
 export default function AdminAllReservationPage() {
-  const searchParams = useSearchParams();
-  const teacherId = searchParams.get('teacherId') || '';
+  const [teacherId, setTeacherId] = useState('');
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string>>({});
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string>>({});
 
   const lessonNameColorMap: Record<string, string> = {
     'れおスク': '#fca5a5',
@@ -44,6 +41,15 @@ export default function AdminAllReservationPage() {
   const getColorForLesson = (lessonName: string): string => {
     return lessonNameColorMap[lessonName] || '#ccc';
   };
+
+  // ✅ teacherId を URL クエリから取得
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('teacherId');
+      if (id) setTeacherId(id);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,7 +68,6 @@ export default function AdminAllReservationPage() {
           const lessonName = teacherSnap.exists()
             ? teacherSnap.data().lessonName || '未設定'
             : '未設定';
-          // 同じ日付に複数スケジュールがある場合は最初の1つのみ使用
           if (!lessonMap[s.date]) {
             lessonMap[s.date] = lessonName;
           }
@@ -113,7 +118,7 @@ export default function AdminAllReservationPage() {
 
   return (
     <div className={styles.container}>
-      {/* 戻るボタン（teacherIdが取得できていれば問題なし） */}
+      {/* ✅ 戻るボタン（teacherIdを反映） */}
       <BackButton href={`/admin/home/${teacherId}`} />
       <h1 className={styles.heading}>全講師の予約一覧</h1>
 
