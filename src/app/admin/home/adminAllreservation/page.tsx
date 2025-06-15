@@ -47,21 +47,30 @@ export default function AdminAllReservationPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const snapshot = await getDocs(collection(db, 'lessonSchedules'));
-      const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Schedule[];
-      setSchedules(scheduleList);
+      try {
+        const snapshot = await getDocs(collection(db, 'lessonSchedules'));
+        const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Schedule[];
+        setSchedules(scheduleList);
 
-      const lessonMap: Record<string, string> = {};
-      for (const s of scheduleList) {
-        const teacherRef = doc(db, 'teacherId', s.teacherId);
-        const teacherSnap = await getDoc(teacherRef);
-        const lessonName = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
-        lessonMap[s.date] = lessonName;
+        const lessonMap: Record<string, string> = {};
+        for (const s of scheduleList) {
+          const teacherRef = doc(db, 'teacherId', s.teacherId);
+          const teacherSnap = await getDoc(teacherRef);
+          const lessonName = teacherSnap.exists()
+            ? teacherSnap.data().lessonName || '未設定'
+            : '未設定';
+          // 同じ日付に複数スケジュールがある場合は最初の1つのみ使用
+          if (!lessonMap[s.date]) {
+            lessonMap[s.date] = lessonName;
+          }
+        }
+        setLessonNameMap(lessonMap);
+      } catch (err) {
+        console.error('データ取得エラー:', err);
       }
-      setLessonNameMap(lessonMap);
     };
 
     fetchData();
@@ -104,6 +113,7 @@ export default function AdminAllReservationPage() {
 
   return (
     <div className={styles.container}>
+      {/* 戻るボタン（teacherIdが取得できていれば問題なし） */}
       <BackButton href={`/admin/home/${teacherId}`} />
       <h1 className={styles.heading}>全講師の予約一覧</h1>
 
@@ -119,6 +129,7 @@ export default function AdminAllReservationPage() {
         mode="admin"
       />
 
+      {/* 凡例表示 */}
       {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
         <div className={styles.legend}>
           {Array.from(new Set(Object.values(lessonNameMap))).map((lessonName, idx) => {
@@ -133,6 +144,7 @@ export default function AdminAllReservationPage() {
         </div>
       )}
 
+      {/* 詳細表示 */}
       {selectedDate && (
         <div className={styles.detail}>
           <p className={styles.dateTitle}>
