@@ -46,19 +46,29 @@ export default function AdminAddReservationPage() {
       return;
     }
 
-    const dateStr = selectedDate.toISOString().split("T")[0];
-
+    const dateStr = selectedDate.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).replaceAll('/', '-');
+    
     const q = query(
       collection(db, 'lessonSchedules'),
       where('teacherId', '==', teacherId),
       where('date', '==', dateStr),
-      where('lessonType', '==', lessonType)
+      where('lessonType', '==', lessonType),
+      where('time', '==', time)  
     );
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
-      alert('同じ日付・種別の予約枠がすでに存在します');
+      alert('同じ日時・種別の予約枠がすでに存在します');
       return;
     }
+
+    if (!time) {
+      alert("開始時間は必須です");
+      return;
+      }
 
     try {
       await addDoc(collection(db, 'lessonSchedules'), {

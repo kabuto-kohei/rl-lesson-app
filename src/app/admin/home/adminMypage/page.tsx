@@ -1,5 +1,4 @@
 // src/app/admin/home/adminMypage/page.tsx
-// src/app/admin/home/adminMypage/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
