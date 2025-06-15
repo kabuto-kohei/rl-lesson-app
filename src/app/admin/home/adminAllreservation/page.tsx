@@ -6,6 +6,7 @@ import {
   getDocs,
   doc,
   getDoc,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -20,6 +21,7 @@ type Schedule = {
   lessonType: string;
   memo?: string;
   teacherId: string;
+  createdAt?: Timestamp;
 };
 
 export default function AdminAllReservationPage() {
@@ -42,7 +44,6 @@ export default function AdminAllReservationPage() {
     return lessonNameColorMap[lessonName] || '#ccc';
   };
 
-  // ✅ teacherId を URL クエリから取得
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -118,7 +119,6 @@ export default function AdminAllReservationPage() {
 
   return (
     <div className={styles.container}>
-      {/* ✅ 戻るボタン（teacherIdを反映） */}
       <BackButton href={`/admin/home/${teacherId}`} />
       <h1 className={styles.heading}>全講師の予約一覧</h1>
 
@@ -162,17 +162,32 @@ export default function AdminAllReservationPage() {
             <p className={styles.noReservation}>この日の予約はありません</p>
           ) : (
             <ul className={styles.reservationList}>
-              {filteredSchedules.map((s) => (
-                <li key={s.id} className={styles.reservationItem}>
+              {filteredSchedules.map((s) => {
+                const createdAtStr = s.createdAt?.toDate
+                  ? s.createdAt.toDate().toLocaleString('ja-JP', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : '日時不明';
+
+                return (
+                  <li key={s.id} className={styles.reservationItem}>
                   <div className={styles.reservationInfo}>
                     <span className={styles.lessonMark}>◯</span>
-                    <span>
-                      {lessonNameMap[s.date]}（{getLessonTypeLabel(s.lessonType)}）｜定員：{s.capacity}
-                      {s.memo ? `｜メモ：${s.memo}` : ''}
-                    </span>
+                    <div className={styles.lessonContent}>
+                      <div>
+                        {lessonNameMap[s.date]}（{getLessonTypeLabel(s.lessonType)}）｜定員：{s.capacity}
+                      </div>
+                      <div className={styles.createdAt}>作成日時：{createdAtStr}</div>
+                      {s.memo && <div className={styles.memo}>メモ：{s.memo}</div>}
+                    </div>
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>

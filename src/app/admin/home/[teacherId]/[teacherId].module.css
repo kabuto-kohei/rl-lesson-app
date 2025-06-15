@@ -56,4 +56,13 @@
   .admin-button.list:hover {
     background-color: #2563eb;
   }
+
+  .admin-button.mypage {
+    background-color: #f59e0b;
+  }
+  
+  .admin-button.mypage:hover {
+    background-color: #d97706;
+  }
+  
     

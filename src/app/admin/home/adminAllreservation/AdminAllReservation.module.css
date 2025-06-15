@@ -76,3 +76,20 @@
   font-size: 16px;
   color: #000;
 }
+
+.lessonContent {
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.createdAt {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.memo {
+  font-size: 0.85rem;
+  color: #444;
+}

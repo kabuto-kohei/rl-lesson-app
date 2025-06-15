@@ -35,7 +35,7 @@ export default function AdminHomeTeacherPage() {
     </h1>
     <div className={styles["admin-buttons"]}>
       <button
-        className={`${styles["admin-button"]} ${styles.add}`}
+        className={`${styles["admin-button"]} ${styles["add"]}`}
         onClick={() =>
           teacherId &&
           typeof teacherId === 'string' &&
@@ -46,7 +46,7 @@ export default function AdminHomeTeacherPage() {
       </button>
 
       <button
-        className={`${styles["admin-button"]} ${styles.list}`}
+        className={`${styles["admin-button"]} ${styles["list"]}`}
         onClick={() =>
           teacherId &&
           typeof teacherId === 'string' &&
@@ -57,7 +57,7 @@ export default function AdminHomeTeacherPage() {
       </button>
 
       <button
-        className={`${styles["admin-button"]} ${styles.list}`}
+        className={`${styles["admin-button"]} ${styles["mypage"]}`}
         onClick={() =>
           teacherId &&
           typeof teacherId === 'string' &&
@@ -67,7 +67,7 @@ export default function AdminHomeTeacherPage() {
         マイページ
       </button>
     </div>
-  </div>
+ </div>
 </main>
   );
 }
