@@ -116,6 +116,7 @@ export default function AdminAddReservationPage() {
       <label>
           <span>開始時間</span>
           <select value={time} onChange={(e) => setTime(e.target.value)} className={styles.input}>
+          <option value="">選択してください</option>
             {Array.from({ length: (22.5 - 9 + 1) * 2 }).map((_, i) => {
               const hour = 9 + Math.floor(i / 2);
               const minute = i % 2 === 0 ? "00" : "30";
