@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
   collection,
   getDocs,
@@ -12,12 +13,6 @@ import Calendar from '@/app/component/Calendar/Calendar';
 import BackButton from "@/app/component/BackButton/BackButton";
 import styles from './AdminAllReservation.module.css';
 
-type Props = {
-  params: {
-    teacherId: string;
-  };
-};
-
 type Schedule = {
   id: string;
   date: string;
@@ -28,8 +23,9 @@ type Schedule = {
   teacherId: string;
 };
 
-export default function AdminAllReservationPage({ params }: Props) {
-  const teacherId = params.teacherId;
+export default function AdminAllReservationPage() {
+  const params = useParams();
+  const teacherId = typeof params.teacherId === 'string' ? params.teacherId : '';
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -167,3 +163,4 @@ export default function AdminAllReservationPage({ params }: Props) {
     </div>
   );
 }
+
