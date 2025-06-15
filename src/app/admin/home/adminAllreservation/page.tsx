@@ -9,11 +9,13 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
-import BackButton from '@/app/component/BackButton/BackButton';
+import BackButton from "@/app/component/BackButton/BackButton";
 import styles from './AdminAllReservation.module.css';
 
 type Props = {
-  params: { teacherId: string };
+  params: {
+    teacherId: string;
+  };
 };
 
 type Schedule = {
@@ -28,6 +30,7 @@ type Schedule = {
 
 export default function AdminAllReservationPage({ params }: Props) {
   const teacherId = params.teacherId;
+
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -51,7 +54,7 @@ export default function AdminAllReservationPage({ params }: Props) {
       const snapshot = await getDocs(collection(db, 'lessonSchedules'));
       const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
+        ...doc.data()
       })) as Schedule[];
       setSchedules(scheduleList);
 
