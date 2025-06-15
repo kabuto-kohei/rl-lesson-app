@@ -14,6 +14,9 @@ export type CalendarProps = {
   goNext: () => void;
   mode?: "user" | "admin";
   teacherColorMap?: Record<string, string>; 
+  teacherId?: string;
+  userId?: string;
+
 };
 
 export default function Calendar({

@@ -57,3 +57,11 @@
 .userInfoButton:hover {
   background-color: #d97706;
 }
+
+.classSelectButton {
+  background-color: #6b7280; 
+  color: white;
+}
+.classSelectButton:hover {
+  background-color: #4b5563;
+}

@@ -124,6 +124,7 @@ export default function UserAddReservationPage() {
     <div className={styles.container}>
       <BackButton href={`/user/${userId}/home`} />
       <h1 className={styles.heading}>スクール予約</h1>
+      <p className={styles.subheading}>マスタークラスの予約カレンダーになります。</p>
       <Calendar
         year={year}
         month={month}
