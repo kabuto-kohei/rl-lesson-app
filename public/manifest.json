@@ -1,0 +1,16 @@
+{
+    "name": "RL Lesson App",
+    "short_name": "RL App",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+      {
+        "src": "/icons/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ]
+  }
+  
