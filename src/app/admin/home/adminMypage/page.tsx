@@ -1,15 +1,11 @@
-// src/app/admin/home/adminMypage/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   collection,
   getDocs,
-  query,
-  where,
   deleteDoc,
   doc,
-  getDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -36,74 +32,84 @@ type User = {
   name: string;
 };
 
-export default function AdminAllReservationPage() {
+export default function AdminMypagePage() {
   const [teacherId, setTeacherId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      setTeacherId(params.get('teacherId'));
-    }
-  }, []);
-
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [bookingsMap, setBookingsMap] = useState<Record<string, string[]>>({});
   const [userMap, setUserMap] = useState<Record<string, string>>({});
-  const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string[]>>({});
+  const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('teacherId');
+    if (id) setTeacherId(id);
+  }, []);
+
+  useEffect(() => {
     if (!teacherId) return;
 
     const fetchData = async () => {
-      const q = query(collection(db, 'lessonSchedules'), where('teacherId', '==', teacherId));
-      const snapshot = await getDocs(q);
+      // スケジュール取得
+      const snapshot = await getDocs(collection(db, 'lessonSchedules'));
+      const scheduleList = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(s => (s as Schedule).teacherId === teacherId) as Schedule[];
 
-      const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Schedule[];
       setSchedules(scheduleList);
 
-      const map: Record<string, Set<string>> = {};
-      for (const s of scheduleList) {
-        const teacherRef = doc(db, 'teacherId', s.teacherId);
-        const teacherSnap = await getDoc(teacherRef);
-        const lesson = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
-      
-        if (!map[s.date]) map[s.date] = new Set();
-        map[s.date].add(lesson);
-      }
-      const lessonNameArrayMap: Record<string, string[]> = {};
-      Object.entries(map).forEach(([date, set]) => {
-        lessonNameArrayMap[date] = Array.from(set);
+      // 講師データ一括取得
+      const teacherSnap = await getDocs(collection(db, 'teacherId'));
+      const teacherMap: Record<string, string> = {};
+      teacherSnap.docs.forEach(doc => {
+        teacherMap[doc.id] = doc.data().lessonName || '未設定';
       });
-      setDateToLessonNameMap(lessonNameArrayMap);
-      
+
+      // 日付→スクール名Map構築
+      const tempMap: Record<string, Set<string>> = {};
+      for (const s of scheduleList) {
+        const lesson = teacherMap[s.teacherId] || '未設定';
+        if (!tempMap[s.date]) tempMap[s.date] = new Set();
+        tempMap[s.date].add(lesson);
+      }
+      const finalMap: Record<string, string[]> = {};
+      Object.entries(tempMap).forEach(([date, set]) => {
+        finalMap[date] = Array.from(set);
+      });
+      setLessonNameMap(finalMap);
+
+      // 予約情報
       const bookingSnap = await getDocs(collection(db, 'bookings'));
       const bookings = bookingSnap.docs.map(doc => doc.data() as Booking);
-
-      const bookingsGrouped: Record<string, string[]> = {};
+      const bookingMap: Record<string, string[]> = {};
       bookings.forEach(b => {
-        if (!bookingsGrouped[b.scheduleId]) bookingsGrouped[b.scheduleId] = [];
-        bookingsGrouped[b.scheduleId].push(b.userId);
+        if (!bookingMap[b.scheduleId]) bookingMap[b.scheduleId] = [];
+        bookingMap[b.scheduleId].push(b.userId);
       });
-      setBookingsMap(bookingsGrouped);
+      setBookingsMap(bookingMap);
 
+      // ユーザー情報
       const userSnap = await getDocs(collection(db, 'users'));
-      const userMapTemp: Record<string, string> = {};
+      const users: Record<string, string> = {};
       userSnap.docs.forEach(doc => {
-        const user = doc.data() as User;
-        userMapTemp[doc.id] = user.name;
+        users[doc.id] = (doc.data() as User).name;
       });
-      setUserMap(userMapTemp);
+      setUserMap(users);
     };
 
     fetchData();
   }, [teacherId]);
+
+  const sortedSchedules = useMemo(() => {
+    return [...schedules].sort((a, b) => a.date.localeCompare(b.date));
+  }, [schedules]);
+
+  const reservedDates = useMemo(() => {
+    return Object.keys(lessonNameMap);
+  }, [lessonNameMap]);
 
   const handleDeleteSchedule = async (scheduleId: string) => {
     if (!window.confirm('この予約枠を削除しますか？')) return;
@@ -118,9 +124,6 @@ export default function AdminAllReservationPage() {
     }
   };
 
-  const sortedSchedules = schedules.sort((a, b) => a.date.localeCompare(b.date));
-  const reservedDates = [...new Set(schedules.map(s => s.date))];
-
   return (
     <main className={styles.container}>
       <BackButton href={`/admin/home/${teacherId}`} />
@@ -132,6 +135,7 @@ export default function AdminAllReservationPage() {
           month={month}
           selectedDate={null}
           availableDates={reservedDates}
+          teacherColorMap={lessonNameMap}
           onDateSelect={() => {}}
           goPrev={() => {
             if (month === 0) {
@@ -150,7 +154,6 @@ export default function AdminAllReservationPage() {
             }
           }}
           mode="admin"
-          teacherColorMap={dateToLessonNameMap}
         />
       </div>
 
