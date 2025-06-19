@@ -44,3 +44,21 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  .toggleButton {
+    margin: 12px 0;
+    padding: 10px 16px;
+    background-color: #6590e5; 
+    color: #ffffff;           
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .toggleButton:hover {
+    background-color: #d1d5db;
+  }
+  

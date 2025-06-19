@@ -13,7 +13,6 @@ import Calendar from '@/app/component/Calendar/Calendar';
 import BackButton from '@/app/component/BackButton/BackButton';
 import styles from './AdminAllReservation.module.css';
 
-// 型定義
 type Schedule = {
   id: string;
   date: string;
@@ -30,11 +29,11 @@ export default function AdminAllReservationPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
   const [lessonNameById, setLessonNameById] = useState<Record<string, string>>({});
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const lessonNameColorMap: Record<string, string> = {
     'れおスク': '#fca5a5',
@@ -88,20 +87,6 @@ export default function AdminAllReservationPage() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
-  const filteredSchedules = schedules
-    .filter(s => s.date === selectedDateStr)
-    .sort((a, b) => a.time.localeCompare(b.time));
-
-  const getLessonTypeLabel = (type: string) => {
-    switch (type) {
-      case 'boulder': return 'ボルダー';
-      case 'lead': return 'リード';
-      case 'both': return 'ボルダー・リード';
-      default: return '不明';
-    }
-  };
-
   const goPrev = () => {
     const prev = new Date(year, month - 1);
     setYear(prev.getFullYear());
@@ -114,6 +99,21 @@ export default function AdminAllReservationPage() {
     setMonth(next.getMonth());
   };
 
+  const getLessonTypeLabel = (type: string) => {
+    switch (type) {
+      case 'boulder': return 'ボルダー';
+      case 'lead': return 'リード';
+      case 'both': return 'ボルダー・リード';
+      default: return '不明';
+    }
+  };
+
+  const filteredSchedules = selectedDate
+    ? schedules
+        .filter(s => s.date === formatDate(selectedDate))
+        .sort((a, b) => a.time.localeCompare(b.time))
+    : [];
+
   return (
     <div className={styles.container}>
       <BackButton href={`/admin/home/${teacherId}`} />
@@ -122,7 +122,7 @@ export default function AdminAllReservationPage() {
       <Calendar
         year={year}
         month={month}
-        selectedDate={selectedDate}
+        selectedDates={selectedDate ? [selectedDate] : []}
         availableDates={Object.keys(lessonNameMap)}
         teacherColorMap={lessonNameMap}
         onDateSelect={setSelectedDate}
@@ -132,14 +132,11 @@ export default function AdminAllReservationPage() {
       />
 
       <div className={styles.legend}>
-        {Object.values(lessonNameColorMap).map((color, idx) => {
-          const name = Object.keys(lessonNameColorMap)[idx];
-          return (
-            <div key={idx} className={styles.legendItem}>
-              <span className={styles.circle} style={{ backgroundColor: color }} />：{name}
-            </div>
-          );
-        })}
+        {Object.entries(lessonNameColorMap).map(([name, color], idx) => (
+          <div key={idx} className={styles.legendItem}>
+            <span className={styles.circle} style={{ backgroundColor: color }} />：{name}
+          </div>
+        ))}
       </div>
 
       {selectedDate && (

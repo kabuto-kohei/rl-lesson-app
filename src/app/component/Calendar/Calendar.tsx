@@ -7,13 +7,13 @@ import { getCalendarMatrix } from "@/app/component/utils/calendarUtils";
 export type CalendarProps = {
   year: number;
   month: number;
-  selectedDate: Date | null;
+  selectedDates?: Date[]; // optional にする（フォールバック対応用）
   availableDates: string[];
   onDateSelect: (date: Date) => void;
   goPrev: () => void;
   goNext: () => void;
   mode?: "user" | "admin";
-  teacherColorMap?: Record<string, string[]>; // 修正: string から string[] に
+  teacherColorMap?: Record<string, string[]>;
   teacherId?: string;
   userId?: string;
 };
@@ -21,7 +21,7 @@ export type CalendarProps = {
 export default function Calendar({
   year,
   month,
-  selectedDate,
+  selectedDates = [], 
   availableDates,
   onDateSelect,
   goPrev,
@@ -72,13 +72,20 @@ export default function Calendar({
           const iso = `${date.getFullYear()}-${(date.getMonth() + 1)
             .toString()
             .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+
           const clickable = isThisMonth && isClickable(iso);
-          const isSelected = selectedDate?.toDateString() === date.toDateString();
+          const isSelected = selectedDates.some(
+            (d) => d.toDateString() === date.toDateString()
+          );
           const isAvailable = availableDates.includes(iso);
+
           const raw = teacherColorMap?.[iso];
           const lessonNames = Array.isArray(raw) ? raw : [];
-          const circleColors = lessonNames.slice(0, 4).map(name => lessonColorPalette[name] || "gray");
-                    return (
+          const circleColors = lessonNames
+            .slice(0, 4)
+            .map((name) => lessonColorPalette[name] || "gray");
+
+          return (
             <div
               key={i}
               className={
