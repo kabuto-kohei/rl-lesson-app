@@ -150,7 +150,7 @@ export default function UserAllReservationPage() {
       <Calendar
         year={year}
         month={month}
-        selectedDate={selectedDate}
+        selectedDates={selectedDate ? [selectedDate] : []}
         availableDates={Object.keys(lessonNameMap)}
         teacherColorMap={lessonNameMap}
         onDateSelect={setSelectedDate}

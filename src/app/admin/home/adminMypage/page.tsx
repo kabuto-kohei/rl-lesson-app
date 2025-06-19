@@ -133,10 +133,10 @@ export default function AdminMypagePage() {
         <Calendar
           year={year}
           month={month}
-          selectedDate={null}
+          selectedDates={[]}  
           availableDates={reservedDates}
           teacherColorMap={lessonNameMap}
-          onDateSelect={() => {}}
+          onDateSelect={() => {}} 
           goPrev={() => {
             if (month === 0) {
               setYear(y => y - 1);
