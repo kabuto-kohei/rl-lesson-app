@@ -64,7 +64,7 @@ export default function BookingCalendar({
     <Calendar
       year={year}
       month={month}
-      selectedDate={selectedDate}
+      selectedDates={selectedDate ? [selectedDate] : []}
       availableDates={availableDates}
       onDateSelect={(date) => {
         setSelectedDate(date);
