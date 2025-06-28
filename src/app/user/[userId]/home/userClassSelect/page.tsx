@@ -206,14 +206,19 @@ export default function UserClassSelectPage() {
                 <ul className={styles.reservationList}>
                   {filteredSchedules.map((s) => (
                     <li key={s.id} className={styles.reservationItem}>
-                      <div className={styles.reservationInfo}>
-                        <div className={styles.timeAndCapacity}>
-                          {s.time}｜定員：{s.capacity}
+                     <div className={styles.reservationInfo}>
+                        <div className={styles.row}>
+                          <div className={styles.timeAndCapacity}>
+                            {s.time}｜定員：{s.capacity}
+                          </div>
+                          <div className={styles.lessonType}>
+                            {getLessonTypeLabel(s.lessonType)}
+                          </div>
                         </div>
-                        <div className={styles.lessonType}>
-                         {getLessonTypeLabel(s.lessonType)}
-                        </div>
-                        {s.memo && <div className={styles.memo}>メモ：{s.memo}</div>}
+
+                        {s.memo && (
+                          <div className={styles.memo}>メモ：{s.memo}</div>
+                        )}
                       </div>
                     </li>
                   ))}

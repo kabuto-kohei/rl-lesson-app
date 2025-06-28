@@ -200,8 +200,14 @@ export default function AdminMypagePage() {
       })}
 
       {editingSchedule && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setEditingSchedule(null)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2>スケジュール編集</h2>
 
             <label>
