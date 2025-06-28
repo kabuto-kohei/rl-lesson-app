@@ -6,6 +6,7 @@ import {
   getDocs,
   doc,
   updateDoc,
+  deleteDoc, // ← 追加
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -135,6 +136,19 @@ export default function AdminMypagePage() {
     }
   };
 
+  const handleDeleteSchedule = async (id: string) => {
+    if (!confirm('本当に削除しますか？')) return;
+
+    try {
+      await deleteDoc(doc(db, 'lessonSchedules', id));
+      setSchedules((prev) => prev.filter((s) => s.id !== id));
+      alert('削除しました');
+    } catch (error) {
+      console.error('削除エラー:', error);
+      alert('削除に失敗しました');
+    }
+  };
+
   return (
     <main className={styles.container}>
       <BackButton href={`/admin/home/${teacherId}`} />
@@ -176,12 +190,20 @@ export default function AdminMypagePage() {
           <div key={s.id} className={styles.card}>
             <h2 className={styles.date}>
               📝 {formatDate(s.date)}
-              <button
-                className={styles.editButton}
-                onClick={() => setEditingSchedule(s)}
-              >
-                編集
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  className={styles.editButton}
+                  onClick={() => setEditingSchedule(s)}
+                >
+                  編集
+                </button>
+                <button
+                  className={styles.deleteButton}
+                  onClick={() => handleDeleteSchedule(s.id)}
+                >
+                  削除
+                </button>
+              </div>
             </h2>
             <p className={styles.detail}>
               時間：{s.time}（定員{s.capacity}）{getLessonTypeLabel(s.lessonType)}
