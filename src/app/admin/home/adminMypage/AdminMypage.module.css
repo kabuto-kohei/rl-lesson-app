@@ -46,11 +46,11 @@
   background-color: #4caf50;
   color: white;
   border: none;
-  padding: 8px 16px;    /* 少し小さめに調整 */
+  padding: 8px 16px;
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 0.95rem;   /* ちょっと小さく */
+  font-size: 0.95rem;
   transition: background-color 0.3s;
 }
 
@@ -121,6 +121,13 @@
   font-size: 0.95rem;
 }
 
+/* Safariのinput[type="date"]幅ズレ対策 */
+.modalContent input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+}
+
 /* === モーダル内ボタン === */
 .modalActions {
   margin-top: 1.5rem;
@@ -133,8 +140,8 @@
   background: #4caf50;
   color: #fff;
   border: none;
-  padding: 0.6rem 1.2rem;   /* 少しだけ小さく */
-  font-size: 0.95rem;       /* 少しだけ小さく */
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
@@ -175,7 +182,7 @@
 
   .modalActions button {
     width: 100%;
-    font-size: 1rem;    /* スマホはやや大きめでちょうど良い */
+    font-size: 1rem;
     padding: 0.9rem;
   }
 }
