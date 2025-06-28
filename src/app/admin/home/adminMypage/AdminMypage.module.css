@@ -1,9 +1,11 @@
+/* レイアウト全体 */
 .container {
   padding: 1rem;
   max-width: 42rem;
   margin: 0 auto;
 }
 
+/* 見出し */
 .heading {
   font-size: 1.25rem;
   font-weight: bold;
@@ -11,6 +13,7 @@
   text-align: center;
 }
 
+/* カード */
 .card {
   margin-bottom: 1.5rem;
   border-bottom: 1px solid #ccc;
@@ -21,6 +24,9 @@
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .detail {
@@ -37,18 +43,110 @@
   padding-left: 1.2em;
 }
 
-.deleteButton {
-  background-color: #ef4444;
+/* 編集ボタン */
+.editButton {
+  background-color: #4caf50;
   color: white;
   border: none;
   padding: 6px 12px;
-  margin-top: 8px;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
   transition: background-color 0.3s;
 }
 
-.deleteButton:hover {
-  background-color: #dc2626;
+.editButton:hover {
+  background-color: #45a049;
+}
+
+/* モーダル背景 */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* モーダル本体 */
+.modalContent {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modalContent h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.modalContent label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.modalContent input,
+.modalContent select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+
+.modalActions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modalActions button {
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.modalActions button:hover {
+  background: #45a049;
+}
+
+.modalActions button:last-child {
+  background: #ccc;
+  color: #333;
+}
+
+.modalActions button:last-child:hover {
+  background: #bbb;
 }

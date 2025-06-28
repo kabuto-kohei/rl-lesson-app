@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import {
   collection,
   getDocs,
-  deleteDoc,
   doc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -38,6 +38,7 @@ export default function AdminMypagePage() {
   const [bookingsMap, setBookingsMap] = useState<Record<string, string[]>>({});
   const [userMap, setUserMap] = useState<Record<string, string>>({});
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -53,22 +54,18 @@ export default function AdminMypagePage() {
     if (!teacherId) return;
 
     const fetchData = async () => {
-      // スケジュール取得
       const snapshot = await getDocs(collection(db, 'lessonSchedules'));
       const scheduleList = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(s => (s as Schedule).teacherId === teacherId) as Schedule[];
-
       setSchedules(scheduleList);
 
-      // 講師データ一括取得
       const teacherSnap = await getDocs(collection(db, 'teacherId'));
       const teacherMap: Record<string, string> = {};
       teacherSnap.docs.forEach(doc => {
         teacherMap[doc.id] = doc.data().lessonName || '未設定';
       });
 
-      // 日付→スクール名Map構築
       const tempMap: Record<string, Set<string>> = {};
       for (const s of scheduleList) {
         const lesson = teacherMap[s.teacherId] || '未設定';
@@ -81,7 +78,6 @@ export default function AdminMypagePage() {
       });
       setLessonNameMap(finalMap);
 
-      // 予約情報
       const bookingSnap = await getDocs(collection(db, 'bookings'));
       const bookings = bookingSnap.docs.map(doc => doc.data() as Booking);
       const bookingMap: Record<string, string[]> = {};
@@ -91,7 +87,6 @@ export default function AdminMypagePage() {
       });
       setBookingsMap(bookingMap);
 
-      // ユーザー情報
       const userSnap = await getDocs(collection(db, 'users'));
       const users: Record<string, string> = {};
       userSnap.docs.forEach(doc => {
@@ -111,16 +106,32 @@ export default function AdminMypagePage() {
     return Object.keys(lessonNameMap);
   }, [lessonNameMap]);
 
-  const handleDeleteSchedule = async (scheduleId: string) => {
-    if (!window.confirm('この予約枠を削除しますか？')) return;
+  const handleSaveEdit = async () => {
+    if (!editingSchedule) return;
 
     try {
-      await deleteDoc(doc(db, 'lessonSchedules', scheduleId));
-      setSchedules(prev => prev.filter(s => s.id !== scheduleId));
-      alert('削除しました');
+      await updateDoc(
+        doc(db, 'lessonSchedules', editingSchedule.id),
+        {
+          date: editingSchedule.date,
+          time: editingSchedule.time,
+          capacity: editingSchedule.capacity,
+          lessonType: editingSchedule.lessonType,
+          memo: editingSchedule.memo || '',
+        }
+      );
+
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.id === editingSchedule.id ? editingSchedule : s
+        )
+      );
+
+      alert('更新しました');
+      setEditingSchedule(null);
     } catch (error) {
-      console.error('削除エラー:', error);
-      alert('削除に失敗しました');
+      console.error('更新エラー:', error);
+      alert('更新に失敗しました');
     }
   };
 
@@ -136,7 +147,7 @@ export default function AdminMypagePage() {
           selectedDates={[]}  
           availableDates={reservedDates}
           teacherColorMap={lessonNameMap}
-          onDateSelect={() => {}} 
+          onDateSelect={() => {}}
           goPrev={() => {
             if (month === 0) {
               setYear(y => y - 1);
@@ -166,10 +177,10 @@ export default function AdminMypagePage() {
             <h2 className={styles.date}>
               📝 {formatDate(s.date)}
               <button
-                className={styles.deleteButton}
-                onClick={() => handleDeleteSchedule(s.id)}
+                className={styles.editButton}
+                onClick={() => setEditingSchedule(s)}
               >
-                削除
+                編集
               </button>
             </h2>
             <p className={styles.detail}>
@@ -187,6 +198,84 @@ export default function AdminMypagePage() {
           </div>
         );
       })}
+
+      {editingSchedule && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2>スケジュール編集</h2>
+
+            <label>
+              日付:
+              <input
+                type="date"
+                value={editingSchedule.date}
+                onChange={(e) =>
+                  setEditingSchedule({ ...editingSchedule, date: e.target.value })
+                }
+              />
+            </label>
+
+            <label>
+              時間:
+              <input
+                type="text"
+                value={editingSchedule.time}
+                onChange={(e) =>
+                  setEditingSchedule({ ...editingSchedule, time: e.target.value })
+                }
+              />
+            </label>
+
+            <label>
+              種別:
+              <select
+                value={editingSchedule.lessonType}
+                onChange={(e) =>
+                  setEditingSchedule({ ...editingSchedule, lessonType: e.target.value })
+                }
+              >
+                <option value="">選択してください</option>
+                <option value="boulder">ボルダー</option>
+                <option value="lead">リード</option>
+                <option value="both">両方</option>
+              </select>
+            </label>
+
+            <label>
+              定員:
+              <input
+                type="number"
+                value={editingSchedule.capacity}
+                onChange={(e) =>
+                  setEditingSchedule({
+                    ...editingSchedule,
+                    capacity: parseInt(e.target.value, 10) || 0,
+                  })
+                }
+              />
+            </label>
+
+            <label>
+              メモ:
+              <input
+                type="text"
+                value={editingSchedule.memo || ''}
+                onChange={(e) =>
+                  setEditingSchedule({
+                    ...editingSchedule,
+                    memo: e.target.value,
+                  })
+                }
+              />
+            </label>
+
+            <div className={styles.modalActions}>
+              <button onClick={handleSaveEdit}>保存</button>
+              <button onClick={() => setEditingSchedule(null)}>キャンセル</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
