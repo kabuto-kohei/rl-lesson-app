@@ -46,10 +46,11 @@
   background-color: #4caf50;
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 8px 16px;    /* 少し小さめに調整 */
+  border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
+  font-size: 0.95rem;   /* ちょっと小さく */
   transition: background-color 0.3s;
 }
 
@@ -84,7 +85,7 @@
   padding: 2rem;
   border-radius: 16px;
   width: 90%;
-  max-width: 420px;  /* ← これ必須 */
+  max-width: 420px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -120,6 +121,7 @@
   font-size: 0.95rem;
 }
 
+/* === モーダル内ボタン === */
 .modalActions {
   margin-top: 1.5rem;
   display: flex;
@@ -131,7 +133,8 @@
   background: #4caf50;
   color: #fff;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem;   /* 少しだけ小さく */
+  font-size: 0.95rem;       /* 少しだけ小さく */
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
@@ -154,8 +157,8 @@
 /* === スマホ対応 === */
 @media (max-width: 480px) {
   .modalContent {
-    width: 70%;        
-    max-width: 360px;   
+    width: 75%;
+    max-width: 360px;
     padding: 1.5rem;
     font-size: 0.95rem;
   }
@@ -172,5 +175,7 @@
 
   .modalActions button {
     width: 100%;
+    font-size: 1rem;    /* スマホはやや大きめでちょうど良い */
+    padding: 0.9rem;
   }
 }
