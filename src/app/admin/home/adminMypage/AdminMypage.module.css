@@ -57,7 +57,7 @@
   background-color: #45a049;
 }
 
-/* === モーダル背景（クリックで閉じる用） === */
+/* === モーダル背景 === */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -84,7 +84,7 @@
   padding: 2rem;
   border-radius: 16px;
   width: 90%;
-  max-width: 420px;
+  max-width: 420px;  /* ← これ必須 */
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -154,8 +154,8 @@
 /* === スマホ対応 === */
 @media (max-width: 480px) {
   .modalContent {
-    width: 70%;
-    max-width: none;
+    width: 70%;        
+    max-width: 360px;   
     padding: 1.5rem;
     font-size: 0.95rem;
   }
