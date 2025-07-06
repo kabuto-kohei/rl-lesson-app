@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import {
   collection,
   getDocs,
@@ -13,9 +12,7 @@ import {
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
-import BackButton from '@/app/component/BackButton/BackButton';
 
-// Firestore の teacherId ドキュメントに対応する型
 type Teacher = {
   id: string;
   name: string;
@@ -34,7 +31,6 @@ type Schedule = {
 };
 
 export default function UserClassSelectPage() {
-  const { userId } = useParams();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
@@ -105,8 +101,8 @@ export default function UserClassSelectPage() {
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
   const filteredSchedules = schedules
-  .filter((s) => s.date === selectedDateStr)
-  .sort((a, b) => a.time.localeCompare(b.time));
+    .filter((s) => s.date === selectedDateStr)
+    .sort((a, b) => a.time.localeCompare(b.time));
 
   const getLessonTypeLabel = (type: string) => {
     switch (type) {
@@ -142,7 +138,7 @@ export default function UserClassSelectPage() {
 
   return (
     <div className={styles.container}>
-      <BackButton href={`/user/${userId}/home`} />
+      {/* <BackButton href={`/user/${userId}/home`} /> ← これを削除 */}
       <h2 className={styles.heading}>クラスを選択してください</h2>
       <select
         value={selectedTeacherId}
@@ -206,7 +202,7 @@ export default function UserClassSelectPage() {
                 <ul className={styles.reservationList}>
                   {filteredSchedules.map((s) => (
                     <li key={s.id} className={styles.reservationItem}>
-                     <div className={styles.reservationInfo}>
+                      <div className={styles.reservationInfo}>
                         <div className={styles.row}>
                           <div className={styles.timeAndCapacity}>
                             {s.time}｜定員：{s.capacity}

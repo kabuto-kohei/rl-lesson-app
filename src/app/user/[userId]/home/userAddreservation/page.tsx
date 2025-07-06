@@ -13,7 +13,6 @@ import {
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
-import BackButton from '@/app/component/BackButton/BackButton';
 
 type Schedule = {
   id: string;
@@ -143,7 +142,6 @@ export default function UserAddReservationPage() {
 
   return (
     <div className={styles.container}>
-      <BackButton href={`/user/${userId}/home`} />
       <h1 className={styles.heading}>スクール予約</h1>
       <p className={styles.subheading}>マスタークラスの予約カレンダーになります。</p>
 

@@ -21,20 +21,32 @@ export default function UserHomePage() {
     <div className={styles.container}>
       <BackButton href={`/user/login`} />
       <div className={styles.inner}>
-        <h1 className={styles.heading}>マイページ</h1>
-        <button className={`${styles.button} ${styles.classSelectButton}`} onClick={() => goTo('/home/userClassSelect')}>
+        <h1 className={styles.heading}>HOME</h1>
+        <button
+          className={`${styles.button} ${styles.classSelectButton}`}
+          onClick={() => goTo('/home/userClassSelect')}
+        >
           スクール日程
         </button>
-        <button className={`${styles.button} ${styles.reserveButton}`} onClick={() => goTo('/home/userAddreservation')}>
+        <button
+          className={`${styles.button} ${styles.reserveButton}`}
+          onClick={() => goTo('/home/userAddreservation')}
+        >
           スクール予約
         </button>
-        <button className={`${styles.button} ${styles.confirmButton}`} onClick={() => goTo('/home/userAllreservation')}>
+        <button
+          className={`${styles.button} ${styles.confirmButton}`}
+          onClick={() => goTo('/home/userAllreservation')}
+        >
           予約確認
         </button>
-        <button className={`${styles.button} ${styles.userInfoButton}`} onClick={() => goTo('/home/userMypage')}>
+        <button
+          className={`${styles.button} ${styles.userInfoButton}`}
+          onClick={() => goTo('/home/userMypage')}
+        >
           ユーザー情報
         </button>
       </div>
     </div>
   );
-}  
+}

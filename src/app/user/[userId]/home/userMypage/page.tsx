@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { db } from '@/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import styles from './page.module.css';
-import BackButton from '@/app/component/BackButton/BackButton';
 
 export default function UserMypage() {
   const params = useParams();
@@ -37,7 +36,6 @@ export default function UserMypage() {
 
   return (
     <div className={styles.container}>
-      <BackButton href={`/user/${userId}/home`} />
       <div className={styles.inner}>
         <h1 className={styles.heading}>こんにちは {originalName} さん</h1>
         <input

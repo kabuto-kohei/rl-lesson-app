@@ -14,7 +14,6 @@ import {
 } from 'firebase/firestore';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
-import BackButton from '@/app/component/BackButton/BackButton';
 
 export default function UserAllReservationPage() {
   const params = useParams();
@@ -144,7 +143,6 @@ export default function UserAllReservationPage() {
 
   return (
     <div className={styles.container}>
-      <BackButton href={`/user/${userId}/home`} />
       <h1 className={styles.heading}>予約確認</h1>
 
       <Calendar
