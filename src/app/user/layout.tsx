@@ -1,6 +1,9 @@
+'use client';
+
 import { Geist, Geist_Mono } from "next/font/google";
-import FooterNav from '@/app/component/FooterNav/FooterNav'; // フッターコンポーネント
-import "../globals.css"; // グローバルCSSを引き継ぐ
+import { usePathname } from 'next/navigation';
+import FooterNav from '@/app/component/FooterNav/FooterNav';
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,11 +20,14 @@ export default function UserLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const hideFooter = pathname === '/user/login'; // ← ここで判定
+
   return (
-    <html lang="ja">
+    <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
-        <FooterNav /> {/* ← ここでユーザー配下だけ共通ナビ */}
+        {!hideFooter && <FooterNav />}
       </body>
     </html>
   );
