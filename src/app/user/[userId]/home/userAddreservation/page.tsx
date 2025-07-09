@@ -173,71 +173,72 @@ export default function UserAddReservationPage() {
     }
   };
 
-  return (
-    <div className={styles.container}>
-      <h1 className={styles.heading}>スクール予約</h1>
-      <p className={styles.subheading}>マスタークラスの予約カレンダーになります。</p>
+return (
+  <div className={styles.container}>
+    <h1 className={styles.heading}>スクール予約</h1>
+    <p className={styles.subheading}>マスタークラスの予約カレンダーになります。</p>
 
-      <Calendar
-        year={year}
-        month={month}
-        selectedDates={selectedDate ? [selectedDate] : []}
-        availableDates={Object.keys(dateToLessonNameMap)}
-        teacherColorMap={dateToLessonNameMap}
-        onDateSelect={setSelectedDate}
-        goPrev={goPrev}
-        goNext={goNext}
-        mode="user"
-      />
+    <Calendar
+      year={year}
+      month={month}
+      selectedDates={selectedDate ? [selectedDate] : []}
+      availableDates={Object.keys(dateToLessonNameMap)}
+      teacherColorMap={dateToLessonNameMap}
+      onDateSelect={setSelectedDate}
+      goPrev={goPrev}
+      goNext={goNext}
+      mode="user"
+    />
 
-      {selectedDate && (
-        <div className={styles.detail}>
-          <p>選択日: {selectedDate.toLocaleDateString()}</p>
-          <p>※「マスタークラス」のみ表示</p>
-          {dailySchedules.length === 0 ? (
-            <p>この日に予約枠はありません</p>
-          ) : (
-            <div className={styles.groupedList}>
-              {Object.entries(groupedSchedules).map(([teacherId, scheduleList]) => (
-                <div key={teacherId} className={styles.teacherGroup}>
-                  <h3 className={styles.teacherName}>
-                    {lessonNameById[teacherId] || '講師名未設定'}
-                  </h3>
-                  <ul className={styles.scheduleList}>
-                    {scheduleList.map((s) => {
-                      const booked = bookingCounts[s.id] || 0;
-                      const remaining = s.capacity - booked;
+    {selectedDate && (
+      <div className={styles.detail}>
+        <p className={styles.dateTitle}>選択日: {selectedDate.toLocaleDateString()}</p>
+        <p className={styles.subnote}>※マスタークラスのみ表示</p>
 
-                      return (
-                        <li key={s.id} className={styles.reservationItem}>
-                          <div className={styles.reservationInfo}>
-                            <div className={styles.lessonType}>
-                              {getLessonTypeLabel(s.lessonType)}
-                            </div>
-                            <div className={styles.timeAndCapacity}>
-                              {s.time}｜定員：{s.capacity}｜残り：{remaining}
-                            </div>
-                            {s.memo && (
-                              <div className={styles.memo}>メモ：{s.memo}</div>
-                            )}
+        {dailySchedules.length === 0 ? (
+          <p className={styles.noReservation}>この日に予約枠はありません</p>
+        ) : (
+          <div className={styles.groupedList}>
+            {Object.entries(groupedSchedules).map(([teacherId, scheduleList]) => (
+              <div key={teacherId} className={styles.teacherGroup}>
+                <h3 className={styles.teacherName}>
+                  {lessonNameById[teacherId] || '講師名未設定'}
+                </h3>
+                <ul className={styles.reservationList}>
+                  {scheduleList.map((s) => {
+                    const booked = bookingCounts[s.id] || 0;
+                    const remaining = s.capacity - booked;
+
+                    return (
+                      <li key={s.id} className={styles.reservationItem}>
+                        <div className={styles.reservationInfo}>
+                          <div className={styles.lessonType}>
+                            {getLessonTypeLabel(s.lessonType)}
                           </div>
-                          <button
-                            className={styles.reserveButton}
-                            onClick={() => handleReserve(s.id, s.capacity)}
-                            disabled={remaining <= 0}
-                          >
-                            {remaining <= 0 ? '満席' : '予約'}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+                          <div className={styles.timeAndCapacity}>
+                            {s.time}｜定員：{s.capacity}｜残り：{remaining}
+                          </div>
+                          {s.memo && (
+                            <div className={styles.memo}>メモ：{s.memo}</div>
+                          )}
+                        </div>
+                        <button
+                          className={styles.reserveButton}
+                          onClick={() => handleReserve(s.id, s.capacity)}
+                          disabled={remaining <= 0}
+                        >
+                          {remaining <= 0 ? '満席' : '予約'}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
 }

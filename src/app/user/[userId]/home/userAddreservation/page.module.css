@@ -1,75 +1,105 @@
+/* ======== ページ全体コンテナ ======== */
 .container {
-  max-width: 480px;
-  margin: 0 auto;
   padding: 24px;
-  background: #ffffff;
-  border-radius: 12px;
+  max-width: 700px;
+  margin: 0 auto;
+  padding-bottom: 80px; /* フッター被り防止 */
 }
 
+/* ======== 見出し ======== */
 .heading {
   font-size: 20px;
   font-weight: bold;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.subheading {
-  font-size: 10px;
-  font-weight: normal;
   margin-bottom: 16px;
   text-align: center;
 }
 
+.subheading {
+  font-size: 12px;
+  font-weight: normal;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #555;
+}
+
+/* ======== サブノート ======== */
+.subnote {
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+  margin: 8px 0 16px;
+}
+
+/* ======== カレンダー下の凡例 ======== */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+  justify-content: center;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* ======== 詳細エリア ======== */
 .detail {
   margin-top: 24px;
-  padding: 16px;
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding-bottom: 80px; /* フッター被り防止 */
 }
 
-.lessonName {
-  font-weight: bold;
+.dateTitle {
   font-size: 16px;
-  color: #333;
-  margin-bottom: 8px;
+  font-weight: bold; /* 太字にする */
+  margin-bottom: 12px;
+  text-align: center;
 }
 
-.teacherGroup {
-  margin-bottom: 24px;
-  padding: 12px;
-  background-color: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+.noReservation {
+  text-align: center;
+  color: #999;
 }
 
-.teacherName {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #111827;
-}
-
-.scheduleList {
+/* ======== 予約リスト ======== */
+.reservationList {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .reservationItem {
-  display: flex; /* 横並びにする */
-  justify-content: space-between; /* 左右に配置 */
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column; /* 上下配置 */
+  border: 1px solid #ccc;
   border-radius: 8px;
-  background-color: #f9fafb;
+  padding: 16px;
+  margin: 0 auto 12px; /* 中央寄せ */
+  background-color: #f9f9f9;
+  max-width: 500px; /* カード幅を固定で綺麗に */
+  text-align: left;
 }
 
 .reservationInfo {
-  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lessonName {
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
 }
 
 .lessonType {
@@ -79,28 +109,34 @@
 }
 
 .timeAndCapacity {
-  font-size: 13px;
-  color: #4b5563;
-  margin-top: 4px;
+  font-size: 14px;
+  color: #555;
 }
 
 .memo {
   font-size: 13px;
-  color: #6b7280;
-  margin-top: 4px;
+  color: #444;
 }
 
+.createdAt {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ======== 予約ボタン ======== */
 .reserveButton {
-  margin-top: 8px;
-  padding: 8px 16px;
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px 0;
   font-size: 14px;
   font-weight: bold;
   background-color: #3b82f6;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .reserveButton:hover {
