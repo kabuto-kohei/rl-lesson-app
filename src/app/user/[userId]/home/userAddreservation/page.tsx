@@ -9,6 +9,8 @@ import {
   Timestamp,
   doc,
   getDoc,
+  query,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -36,13 +38,16 @@ export default function UserAddReservationPage() {
   const [lessonNameById, setLessonNameById] = useState<Record<string, string>>({});
   const [classTypeById, setClassTypeById] = useState<Record<string, string>>({});
   const [dateToLessonNameMap, setDateToLessonNameMap] = useState<Record<string, string[]>>({});
+  const [bookingCounts, setBookingCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchSchedulesAndBookings = async () => {
+      // スケジュール取得
       const snapshot = await getDocs(collection(db, 'lessonSchedules'));
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Schedule[];
       setSchedules(data);
 
+      // 先生情報と地図生成
       const lessonMap: Record<string, Set<string>> = {};
       const nameMap: Record<string, string> = {};
       const typeMap: Record<string, string> = {};
@@ -53,17 +58,16 @@ export default function UserAddReservationPage() {
         const teacherData = teacherSnap.exists() ? teacherSnap.data() : {};
         const lesson = teacherData.lessonName || '未設定';
         const classType = teacherData.ClassType || '未設定';
-      
+
         nameMap[s.teacherId] = lesson;
         typeMap[s.teacherId] = classType;
-      
-        // ★ マスタークラスのスケジュールのみ地図に登録
+
         if (classType === 'マスタークラス') {
           if (!lessonMap[s.date]) lessonMap[s.date] = new Set();
           lessonMap[s.date].add(lesson);
         }
       }
-      
+
       const finalMap: Record<string, string[]> = {};
       Object.entries(lessonMap).forEach(([date, set]) => {
         finalMap[date] = Array.from(set);
@@ -72,9 +76,23 @@ export default function UserAddReservationPage() {
       setLessonNameById(nameMap);
       setClassTypeById(typeMap);
       setDateToLessonNameMap(finalMap);
+
+      // 予約件数取得
+      const bookingSnapshot = await getDocs(collection(db, 'bookings'));
+      const counts: Record<string, number> = {};
+      bookingSnapshot.docs.forEach(doc => {
+        const booking = doc.data();
+        const sid = booking.scheduleId;
+        if (counts[sid]) {
+          counts[sid] += 1;
+        } else {
+          counts[sid] = 1;
+        }
+      });
+      setBookingCounts(counts);
     };
 
-    fetchSchedules();
+    fetchSchedulesAndBookings();
   }, []);
 
   const formatDate = (date: Date): string => {
@@ -121,19 +139,34 @@ export default function UserAddReservationPage() {
     }
   };
 
-  const handleReserve = async (scheduleId: string) => {
+  const handleReserve = async (scheduleId: string, capacity: number) => {
     if (!userId) {
       alert('ユーザーIDが見つかりません');
       return;
     }
 
     try {
+      // 最新予約件数を再取得
+      const q = query(collection(db, 'bookings'), where('scheduleId', '==', scheduleId));
+      const snapshot = await getDocs(q);
+      const currentCount = snapshot.size;
+
+      if (currentCount >= capacity) {
+        alert('申し訳ございません、この枠は満席です。');
+        return;
+      }
+
       await addDoc(collection(db, 'bookings'), {
         scheduleId,
         userId,
         createdAt: Timestamp.now(),
       });
       alert('予約が完了しました');
+      // 画面のカウントも更新
+      setBookingCounts(prev => ({
+        ...prev,
+        [scheduleId]: (prev[scheduleId] || 0) + 1,
+      }));
     } catch (error) {
       console.error('予約エラー:', error);
       alert('予約に失敗しました');
@@ -171,27 +204,33 @@ export default function UserAddReservationPage() {
                     {lessonNameById[teacherId] || '講師名未設定'}
                   </h3>
                   <ul className={styles.scheduleList}>
-                    {scheduleList.map((s) => (
-                      <li key={s.id} className={styles.reservationItem}>
-                      <div className={styles.reservationInfo}>
-                        <div className={styles.lessonType}>
-                          {getLessonTypeLabel(s.lessonType)}
-                        </div>
-                        <div className={styles.timeAndCapacity}>
-                          {s.time}｜定員：{s.capacity}
-                        </div>
-                        {s.memo && (
-                          <div className={styles.memo}>メモ：{s.memo}</div>
-                        )}
-                      </div>
-                      <button
-                        className={styles.reserveButton}
-                        onClick={() => handleReserve(s.id)}
-                      >
-                        予約
-                      </button>
-                    </li>
-                    ))}
+                    {scheduleList.map((s) => {
+                      const booked = bookingCounts[s.id] || 0;
+                      const remaining = s.capacity - booked;
+
+                      return (
+                        <li key={s.id} className={styles.reservationItem}>
+                          <div className={styles.reservationInfo}>
+                            <div className={styles.lessonType}>
+                              {getLessonTypeLabel(s.lessonType)}
+                            </div>
+                            <div className={styles.timeAndCapacity}>
+                              {s.time}｜定員：{s.capacity}｜残り：{remaining}
+                            </div>
+                            {s.memo && (
+                              <div className={styles.memo}>メモ：{s.memo}</div>
+                            )}
+                          </div>
+                          <button
+                            className={styles.reserveButton}
+                            onClick={() => handleReserve(s.id, s.capacity)}
+                            disabled={remaining <= 0}
+                          >
+                            {remaining <= 0 ? '満席' : '予約'}
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ))}
