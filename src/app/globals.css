@@ -17,3 +17,8 @@ body {
   color: var(--foreground);      /* 黒文字 */
   font-family: Arial, sans-serif;
 }
+
+.page-wrapper {
+  min-height: 100vh;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 30px)); /* フッター分の余白確保 */
+}

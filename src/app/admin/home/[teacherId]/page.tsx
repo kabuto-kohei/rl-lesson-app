@@ -53,7 +53,7 @@ export default function AdminHomeTeacherPage() {
           window.location.assign(`/admin/home/adminAllreservation?teacherId=${teacherId}`)
         }
       >
-        予約一覧
+        スクール一覧
       </button>
 
       <button

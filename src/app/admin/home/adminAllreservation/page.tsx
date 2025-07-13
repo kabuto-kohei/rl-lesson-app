@@ -10,7 +10,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
-import BackButton from '@/app/component/BackButton/BackButton';
 import styles from './AdminAllReservation.module.css';
 
 type Schedule = {
@@ -25,7 +24,6 @@ type Schedule = {
 };
 
 export default function AdminAllReservationPage() {
-  const [teacherId, setTeacherId] = useState('');
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
   const [lessonNameById, setLessonNameById] = useState<Record<string, string>>({});
@@ -41,12 +39,6 @@ export default function AdminAllReservationPage() {
     'かぶスク': '#fcd34d',
     'おーらんスクール': '#34d399',
   };
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('teacherId');
-    if (id) setTeacherId(id);
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,7 +108,6 @@ export default function AdminAllReservationPage() {
 
   return (
     <div className={styles.container}>
-      <BackButton href={`/admin/home/${teacherId}`} />
       <h1 className={styles.heading}>全講師の予約一覧</h1>
 
       <Calendar

@@ -10,7 +10,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
-import BackButton from "@/app/component/BackButton/BackButton";
 import styles from './AdminMypage.module.css';
 
 type Schedule = {
@@ -151,7 +150,6 @@ export default function AdminMypagePage() {
 
   return (
     <main className={styles.container}>
-      <BackButton href={`/admin/home/${teacherId}`} />
       <h1 className={styles.heading}>マイページ</h1>
 
       <div className={styles.calendarWrapper}>

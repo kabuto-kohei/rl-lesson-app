@@ -12,7 +12,6 @@ import {
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './AdminAddReservation.module.css';
-import BackButton from "@/app/component/BackButton/BackButton";
 
 export default function AdminAddReservationPage() {
   const [teacherId, setTeacherId] = useState<string | null>(null);
@@ -110,7 +109,6 @@ export default function AdminAddReservationPage() {
 
   return (
     <main className={styles.container}>
-      <BackButton href={`/admin/home/${teacherId}`} />
       <h1 className={styles.heading}>予約枠の追加</h1>
 
       <button

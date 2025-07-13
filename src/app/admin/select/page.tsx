@@ -18,18 +18,27 @@ export default function AdminSelectPage() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const snapshot = await getDocs(collection(db, 'teacherId'));
-      const teacherList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name || '無名の講師',
-      }));
-      setTeachers(teacherList);
+      try {
+        const snapshot = await getDocs(collection(db, 'teacherId'));
+        const teacherList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name || '無名の講師',
+        }));
+        setTeachers(teacherList);
+      } catch (error) {
+        console.error('講師データの取得に失敗しました:', error);
+      }
     };
+
     fetchTeachers();
   }, []);
 
   const handleNavigate = () => {
     if (selectedTeacherId) {
+      // ✅ localStorage に保存
+      localStorage.setItem('adminTeacherId', selectedTeacherId);
+
+      // ✅ /admin/home/[teacherId] に遷移
       router.push(`/admin/home/${selectedTeacherId}`);
     }
   };
@@ -51,7 +60,7 @@ export default function AdminSelectPage() {
               </option>
             ))}
           </select>
-  
+
           <button
             onClick={handleNavigate}
             disabled={!selectedTeacherId}
@@ -61,7 +70,6 @@ export default function AdminSelectPage() {
           </button>
         </div>
       </div>
-    </main>  
-  );  
+    </main>
+  );
 }
-
