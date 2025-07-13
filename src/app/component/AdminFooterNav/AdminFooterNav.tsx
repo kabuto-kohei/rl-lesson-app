@@ -5,6 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './AdminFooterNav.module.css';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faHouse,
+  faPlus,
+  faCheckSquare,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons';
+
 export default function AdminFooterNav() {
   const pathname = usePathname();
   const [teacherId, setTeacherId] = useState('');
@@ -16,16 +24,15 @@ export default function AdminFooterNav() {
     }
   }, []);
 
-  if (!teacherId) return null; // teacherId 未取得なら描画しない
+  if (!teacherId) return null;
 
   return (
     <nav className={styles.nav}>
-      {/* ✅ ホーム：/admin/home/[teacherId] */}
       <Link
         href={`/admin/home/${teacherId}`}
         className={`${styles.link} ${pathname === `/admin/home/${teacherId}` ? styles.active : ''}`}
       >
-        <span className={styles.icon}>🏠</span>
+        <FontAwesomeIcon icon={faHouse} className={styles.icon} />
         <span className={styles.label}>ホーム</span>
       </Link>
 
@@ -33,7 +40,7 @@ export default function AdminFooterNav() {
         href={`/admin/home/adminAddreservation?teacherId=${teacherId}`}
         className={`${styles.link} ${pathname.includes('/adminAddreservation') ? styles.active : ''}`}
       >
-        <span className={styles.icon}>➕</span>
+        <FontAwesomeIcon icon={faPlus} className={styles.icon} />
         <span className={styles.label}>予約追加</span>
       </Link>
 
@@ -41,7 +48,7 @@ export default function AdminFooterNav() {
         href={`/admin/home/adminAllreservation?teacherId=${teacherId}`}
         className={`${styles.link} ${pathname.includes('/adminAllreservation') ? styles.active : ''}`}
       >
-        <span className={styles.icon}>☑️</span>
+        <FontAwesomeIcon icon={faCheckSquare} className={styles.icon} />
         <span className={styles.label}>スクール一覧</span>
       </Link>
 
@@ -49,7 +56,7 @@ export default function AdminFooterNav() {
         href={`/admin/home/adminMypage?teacherId=${teacherId}`}
         className={`${styles.link} ${pathname.includes('/adminMypage') ? styles.active : ''}`}
       >
-        <span className={styles.icon}>👤</span>
+        <FontAwesomeIcon icon={faUser} className={styles.icon} />
         <span className={styles.label}>マイページ</span>
       </Link>
     </nav>
