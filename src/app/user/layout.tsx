@@ -25,7 +25,7 @@ export default function UserLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const hideFooterPages = ['/user/login'];
+  const hideFooterPages = ['/user/login', '/user/register'];
   const hideFooter = hideFooterPages.includes(pathname);
 
   return (
