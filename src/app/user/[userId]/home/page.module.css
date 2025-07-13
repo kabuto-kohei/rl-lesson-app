@@ -1,9 +1,44 @@
+/* ====== ヘッダー追加 ====== */
+.header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #ddd;
+}
+
+.greeting {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* ====== メインレイアウト ====== */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
   background-color: #f5f5f5;
+  position: relative; /* ← headerを絶対配置するために追加 */
 }
 
 .inner {
@@ -23,7 +58,7 @@
   text-align: center;
 }
 
-/* 共通ボタンスタイル */
+/* ====== 共通ボタンスタイル ====== */
 .button {
   width: 100%;
   padding: 12px;
@@ -38,14 +73,14 @@
 }
 
 .reserveButton {
-  background-color: #3b82f6; 
+  background-color: #3b82f6;
 }
 .reserveButton:hover {
   background-color: #2563eb;
 }
 
 .confirmButton {
-  background-color: #10b981; 
+  background-color: #10b981;
 }
 .confirmButton:hover {
   background-color: #059669;
@@ -59,7 +94,7 @@
 }
 
 .classSelectButton {
-  background-color: #6b7280; 
+  background-color: #6b7280;
   color: white;
 }
 .classSelectButton:hover {

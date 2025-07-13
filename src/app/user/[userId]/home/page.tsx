@@ -1,13 +1,31 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 import styles from './page.module.css';
 import BackButton from '@/app/component/BackButton/BackButton';
+import UserHeader from '@/app/component/Header/Header';
 
 export default function UserHomePage() {
   const params = useParams();
   const router = useRouter();
   const userId = typeof params.userId === 'string' ? params.userId : '';
+
+  const [userName, setUserName] = useState<string>('ゲスト');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!userId) return;
+      const ref = doc(db, 'users', userId);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        setUserName(snap.data().name || 'ゲスト');
+      }
+    };
+    fetchUser();
+  }, [userId]);
 
   const goTo = (path: string) => {
     if (!userId) {
@@ -19,6 +37,8 @@ export default function UserHomePage() {
 
   return (
     <div className={styles.container}>
+      <UserHeader userName={userName} />
+
       <BackButton href={`/user/login`} />
       <div className={styles.inner}>
         <h1 className={styles.heading}>HOME</h1>

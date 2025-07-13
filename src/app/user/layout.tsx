@@ -25,14 +25,13 @@ export default function UserLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const hideFooter = pathname === '/user/login';
+  const hideFooterPages = ['/user/login'];
+  const hideFooter = hideFooterPages.includes(pathname);
 
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-        {!hideFooter && <FooterNav />}
-      </body>
-    </html>
+    <div lang="ja" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {children}
+      {!hideFooter && <FooterNav />}
+    </div>
   );
 }
