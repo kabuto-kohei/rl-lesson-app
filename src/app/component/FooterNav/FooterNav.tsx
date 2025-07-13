@@ -4,6 +4,15 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import styles from './FooterNav.module.css';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faHouse,
+  faCalendarDays,
+  faPen,
+  faCheckSquare,
+  faUser,
+} from '@fortawesome/free-solid-svg-icons';
+
 export default function FooterNav() {
   const pathname = usePathname();
   const params = useParams();
@@ -15,7 +24,7 @@ export default function FooterNav() {
         href={`/user/${userId}/home`}
         className={`${styles.link} ${pathname === `/user/${userId}/home` ? styles.active : ''}`}
       >
-        <span className={styles.icon}>🏠</span>
+        <FontAwesomeIcon icon={faHouse} className={styles.icon} />
         <span className={styles.label}>ホーム</span>
       </Link>
 
@@ -23,7 +32,7 @@ export default function FooterNav() {
         href={`/user/${userId}/home/userClassSelect`}
         className={`${styles.link} ${pathname === `/user/${userId}/home/userClassSelect` ? styles.active : ''}`}
       >
-        <span className={styles.icon}>🗓️</span>
+        <FontAwesomeIcon icon={faCalendarDays} className={styles.icon} />
         <span className={styles.label}>日程</span>
       </Link>
 
@@ -31,7 +40,7 @@ export default function FooterNav() {
         href={`/user/${userId}/home/userAddreservation`}
         className={`${styles.link} ${pathname === `/user/${userId}/home/userAddreservation` ? styles.active : ''}`}
       >
-        <span className={styles.icon}>✏️</span>
+        <FontAwesomeIcon icon={faPen} className={styles.icon} />
         <span className={styles.label}>予約</span>
       </Link>
 
@@ -39,7 +48,7 @@ export default function FooterNav() {
         href={`/user/${userId}/home/userAllreservation`}
         className={`${styles.link} ${pathname === `/user/${userId}/home/userAllreservation` ? styles.active : ''}`}
       >
-        <span className={styles.icon}>☑️</span>
+        <FontAwesomeIcon icon={faCheckSquare} className={styles.icon} />
         <span className={styles.label}>確認</span>
       </Link>
 
@@ -47,7 +56,7 @@ export default function FooterNav() {
         href={`/user/${userId}/home/userMypage`}
         className={`${styles.link} ${pathname === `/user/${userId}/home/userMypage` ? styles.active : ''}`}
       >
-        <span className={styles.icon}>👤</span>
+        <FontAwesomeIcon icon={faUser} className={styles.icon} />
         <span className={styles.label}>マイページ</span>
       </Link>
     </nav>

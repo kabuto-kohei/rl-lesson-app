@@ -1,5 +1,9 @@
 'use client';
 
+import '@fortawesome/fontawesome-svg-core/styles.css';
+import { config } from '@fortawesome/fontawesome-svg-core';
+config.autoAddCss = false;
+
 import { Geist, Geist_Mono } from "next/font/google";
 import { usePathname } from 'next/navigation';
 import FooterNav from '@/app/component/FooterNav/FooterNav';
@@ -21,7 +25,7 @@ export default function UserLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const hideFooter = pathname === '/user/login'; // ← ここで判定
+  const hideFooter = pathname === '/user/login';
 
   return (
     <html lang="en">
