@@ -1,35 +1,30 @@
 .backButton {
-    position: absolute;
-    top: 24px;
-    right: 24px;
-    z-index: 10;
-  }
-  
+  position: absolute;
+  top: 50%; 
+  right: 16px;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.backLink {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #3368ee;
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.backLink:hover {
+  background-color: #264dc4;
+}
+
+@media (max-width: 480px) {
   .backLink {
-    display: inline-block;
-    padding: 8px 16px;
-    background-color: #3368ee;
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    border-radius: 6px;
-    transition: background-color 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 6px 12px;
+    font-size: 16px;
   }
-  
-  .backLink:hover {
-    background-color: #264dc4;
-  }
-  
-  @media (max-width: 480px) {
-    .backButton {
-      top: 24px;
-      right: 24px;
-    }
-  
-    .backLink {
-      padding: 6px 12px;
-      font-size: 18px;
-    }
-  }
-  
+}

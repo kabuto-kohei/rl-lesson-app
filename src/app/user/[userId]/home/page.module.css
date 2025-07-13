@@ -1,20 +1,22 @@
-/* ====== ヘッダー追加 ====== */
+/* ====== ヘッダー固定表示 ====== */
 .header {
-  position: absolute;
+  position: fixed; /* ← 固定表示に変更 */
   top: 0;
-  right: 0;
+  left: 0;
+  width: 100%;
   padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background-color: transparent;
-  z-index: 10;
+  gap: 1rem;
+  background-color: #fff; /* ← 背景を白にして読みやすく */
+  z-index: 1000;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); /* うっすら影を追加 */
 }
 
 .userInfo {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 1rem;
 }
 
 .avatar {
@@ -34,11 +36,13 @@
 /* ====== メインレイアウト ====== */
 .container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
   background-color: #f5f5f5;
-  position: relative; /* ← headerを絶対配置するために追加 */
+  padding-top: 96px; /* ← ヘッダー高さ分の余白を確保 */
+  position: relative;
 }
 
 .inner {

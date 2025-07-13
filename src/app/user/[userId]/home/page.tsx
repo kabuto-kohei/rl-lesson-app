@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import styles from './page.module.css';
-import BackButton from '@/app/component/BackButton/BackButton';
 import UserHeader from '@/app/component/Header/Header';
 
 export default function UserHomePage() {
@@ -38,8 +37,6 @@ export default function UserHomePage() {
   return (
     <div className={styles.container}>
       <UserHeader userName={userName} />
-
-      <BackButton href={`/user/login`} />
       <div className={styles.inner}>
         <h1 className={styles.heading}>HOME</h1>
         <button
