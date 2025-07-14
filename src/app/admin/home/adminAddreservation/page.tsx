@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
-export default function AdminAddSelectPage() {
+export default function AdminAddReservationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [teacherId, setTeacherId] = useState<string | null>(null);
