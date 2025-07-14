@@ -1,0 +1,64 @@
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px;
+    background: white;
+    border-radius: 16px;
+  }
+  
+  .heading {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .label {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  
+  .input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  
+  .button {
+    width: 100%;
+    background-color: #4caf50;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  
+  .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .toggleButton {
+    margin: 12px 0;
+    padding: 10px 16px;
+    background-color: #6590e5; 
+    color: #ffffff;           
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .toggleButton:hover {
+    background-color: #d1d5db;
+  }
+  

@@ -1,68 +1,73 @@
 .admin-home {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    padding: 24px;
-    background-color: #f5f5f5; 
-  }
-  
-  .inner {
-    max-width: 480px;
-    width: 100%;
-    padding: 32px 24px;
-    background-color: #ffffff;
-    border-radius: 16px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
-  
- 
-  .admin-heading {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 24px;
-  }
-  
-  .admin-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .admin-button {
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    color: white;
-  }
-  
-  .admin-button.add {
-    background-color: #10b981;
-  }
-  
-  .admin-button.add:hover {
-    background-color: #059669;
-  }
-  
-  .admin-button.list {
-    background-color: #3b82f6; 
-  }
-  
-  .admin-button.list:hover {
-    background-color: #2563eb;
-  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 24px;
+  background-color: #f5f5f5;
+  position: relative; 
+}
 
-  .admin-button.mypage {
-    background-color: #f59e0b;
-  }
-  
-  .admin-button.mypage:hover {
-    background-color: #d97706;
-  }
-  
-    
+.backButtonFixed {
+  position: absolute;
+  top: 20px;      
+  right: 20px;    
+  z-index: 1000;
+}
+
+.inner {
+  max-width: 480px;
+  width: 100%;
+  padding: 32px 24px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.admin-heading {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.admin-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-button {
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  color: white;
+}
+
+.admin-button.add {
+  background-color: #10b981;
+}
+
+.admin-button.add:hover {
+  background-color: #059669;
+}
+
+.admin-button.list {
+  background-color: #3b82f6;
+}
+
+.admin-button.list:hover {
+  background-color: #2563eb;
+}
+
+.admin-button.mypage {
+  background-color: #f59e0b;
+}
+
+.admin-button.mypage:hover {
+  background-color: #d97706;
+}

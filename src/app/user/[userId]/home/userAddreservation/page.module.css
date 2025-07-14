@@ -1,149 +1,33 @@
-/* ======== ページ全体コンテナ ======== */
 .container {
-  padding: 24px;
-  max-width: 700px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.inner {
+  max-width: 400px;
   margin: 0 auto;
-  padding-bottom: 80px; /* フッター被り防止 */
 }
 
-/* ======== 見出し ======== */
 .heading {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.subheading {
-  font-size: 12px;
-  font-weight: normal;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #555;
-}
-
-/* ======== サブノート ======== */
-.subnote {
-  font-size: 12px;
-  color: #777;
-  text-align: center;
-  margin: 8px 0 16px;
-}
-
-/* ======== カレンダー下の凡例 ======== */
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 16px 0;
-  justify-content: center;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-}
-
-.circle {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
-}
-
-/* ======== 詳細エリア ======== */
-.detail {
-  margin-top: 24px;
-  padding-bottom: 80px; /* フッター被り防止 */
-}
-
-.dateTitle {
-  font-size: 16px;
-  font-weight: bold; /* 太字にする */
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.noReservation {
-  text-align: center;
-  color: #999;
-}
-
-/* ======== 予約リスト ======== */
-.reservationList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.reservationItem {
-  display: flex;
-  flex-direction: column; /* 上下配置 */
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 0 auto 12px; /* 中央寄せ */
-  background-color: #f9f9f9;
-  max-width: 500px; /* カード幅を固定で綺麗に */
-  text-align: left;
-}
-
-.reservationInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.lessonName {
-  font-weight: bold;
-  font-size: 16px;
+  font-size: 1.6rem;
+  margin-bottom: 2rem;
   color: #333;
 }
 
-.lessonType {
-  font-size: 14px;
-  font-weight: normal;
-  color: #1f2937;
-}
-
-.timeAndCapacity {
-  font-size: 14px;
-  color: #555;
-}
-
-.memo {
-  font-size: 13px;
-  color: #444;
-}
-
-.createdAt {
-  font-size: 12px;
-  color: #888;
-}
-
-/* ======== 予約ボタン ======== */
-.reserveButton {
-  margin-top: 12px;
+.button {
+  display: block;
   width: 100%;
-  padding: 10px 0;
-  font-size: 14px;
-  font-weight: bold;
-  background-color: #3b82f6;
-  color: #fff;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #1565c0;
+  color: white;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: bold;
   transition: background-color 0.2s;
-  white-space: nowrap;
 }
 
-.reserveButton:hover {
-  background-color: #2563eb;
-}
-
-.reserveButton:disabled {
-  background-color: #a1a1aa;
-  cursor: not-allowed;
+.button:hover {
+  background-color: #0d47a1;
 }

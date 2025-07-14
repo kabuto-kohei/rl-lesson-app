@@ -1,0 +1,42 @@
+.container {
+  padding: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.heading {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.subheading {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background-color: #1976d2;
+  color: white;
+  cursor: pointer;
+  width: 100%;
+  max-width: 300px;
+}
+
+.button:hover {
+  background-color: #0d47a1;
+}

@@ -40,6 +40,7 @@ export default function Calendar({
     "そらスク": "#93c5fd",
     "かぶスク": "#fcd34d",
     "おーらんスクール": "#34d399",
+    '体験クラス': '#c4b5fd',
     "未設定": "gray",
   };
 

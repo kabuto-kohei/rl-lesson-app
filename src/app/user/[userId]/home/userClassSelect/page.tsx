@@ -27,6 +27,7 @@ type Schedule = {
   lessonType: string;
   memo?: string;
   teacherId: string;
+  classType: string;
   createdAt?: { toDate: () => Date };
 };
 
@@ -43,14 +44,16 @@ export default function UserClassSelectPage() {
   useEffect(() => {
     const fetchTeachers = async () => {
       const snapshot = await getDocs(collection(db, 'teacherId'));
-      const data = snapshot.docs.map((doc) => {
-        const d = doc.data() as { name: string; ClassType: string };
-        return {
-          id: doc.id,
-          name: d.name,
-          classType: d.ClassType || '未設定',
-        };
-      });
+      const data = snapshot.docs
+        .map((doc) => {
+          const d = doc.data() as { name: string; ClassType: string };
+          return {
+            id: doc.id,
+            name: d.name,
+            classType: d.ClassType || '未設定',
+          };
+        })
+        .filter((teacher) => teacher.classType !== '体験クラス');
       setTeachers(data);
     };
     fetchTeachers();
@@ -69,10 +72,11 @@ export default function UserClassSelectPage() {
       where('teacherId', '==', selectedTeacherId)
     );
     const snapshot = await getDocs(q);
-    const scheduleList = snapshot.docs.map(doc => ({
+    const scheduleList = (snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Schedule[];
+    })) as Schedule[]).filter((s) => s.classType !== '体験クラス');
+
     setSchedules(scheduleList);
 
     const tempMap: Record<string, Set<string>> = {};
@@ -119,6 +123,7 @@ export default function UserClassSelectPage() {
       'そらスク': '#93c5fd',
       'かぶスク': '#fcd34d',
       'おーらんスクール': '#34d399',
+      '体験クラス': '#c4b5fd',
       '未設定': 'gray',
     };
     return map[lessonName] || '#ccc';
@@ -138,7 +143,6 @@ export default function UserClassSelectPage() {
 
   return (
     <div className={styles.container}>
-      {/* <BackButton href={`/user/${userId}/home`} /> ← これを削除 */}
       <h2 className={styles.heading}>クラスを選択してください</h2>
       <select
         value={selectedTeacherId}
@@ -211,7 +215,6 @@ export default function UserClassSelectPage() {
                             {getLessonTypeLabel(s.lessonType)}
                           </div>
                         </div>
-
                         {s.memo && (
                           <div className={styles.memo}>メモ：{s.memo}</div>
                         )}

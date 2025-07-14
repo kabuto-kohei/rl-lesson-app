@@ -20,13 +20,14 @@ type Schedule = {
   lessonType: string;
   memo?: string;
   teacherId: string;
+  classType: string;
   createdAt?: Timestamp;
 };
 
 export default function AdminAllReservationPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
-  const [lessonNameById, setLessonNameById] = useState<Record<string, string>>({});
+  const [lessonNameByScheduleId, setLessonNameByScheduleId] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const today = new Date();
@@ -38,6 +39,7 @@ export default function AdminAllReservationPage() {
     'そらスク': '#93c5fd',
     'かぶスク': '#fcd34d',
     'おーらんスクール': '#34d399',
+    '体験クラス': '#c4b5fd',
   };
 
   useEffect(() => {
@@ -50,14 +52,24 @@ export default function AdminAllReservationPage() {
       setSchedules(scheduleList);
 
       const lessonMap: Record<string, Set<string>> = {};
-      const lessonById: Record<string, string> = {};
+      const lessonByScheduleId: Record<string, string> = {};
 
       for (const s of scheduleList) {
-        const teacherRef = doc(db, 'teacherId', s.teacherId);
-        const teacherSnap = await getDoc(teacherRef);
-        const lessonName = teacherSnap.exists() ? teacherSnap.data().lessonName || '未設定' : '未設定';
+        let lessonName = '未設定';
 
-        lessonById[s.teacherId] = lessonName;
+        if (s.classType === '体験クラス') {
+          lessonName = '体験クラス';
+        } else {
+          const teacherRef = doc(db, 'teacherId', s.teacherId);
+          const teacherSnap = await getDoc(teacherRef);
+          if (teacherSnap.exists()) {
+            const teacherData = teacherSnap.data();
+            lessonName = teacherData.lessonName || '未設定';
+          }
+        }
+
+        lessonByScheduleId[s.id] = lessonName;
+
         if (!lessonMap[s.date]) lessonMap[s.date] = new Set();
         lessonMap[s.date].add(lessonName);
       }
@@ -66,9 +78,11 @@ export default function AdminAllReservationPage() {
       Object.entries(lessonMap).forEach(([date, set]) => {
         finalMap[date] = Array.from(set);
       });
+
       setLessonNameMap(finalMap);
-      setLessonNameById(lessonById);
+      setLessonNameByScheduleId(lessonByScheduleId);
     };
+
     fetchData();
   }, []);
 
@@ -151,11 +165,16 @@ export default function AdminAllReservationPage() {
                     })
                   : '日時不明';
 
+                const lessonDisplay =
+                  lessonNameByScheduleId[s.id] === '体験クラス'
+                    ? '体験クラス'
+                    : `${lessonNameByScheduleId[s.id]}（${getLessonTypeLabel(s.lessonType)}）`;
+
                 return (
                   <li key={s.id} className={styles.reservationItem}>
                     <div className={styles.reservationInfo}>
                       <div className={styles.lessonName}>
-                        {lessonNameById[s.teacherId]}（{getLessonTypeLabel(s.lessonType)}）
+                        {lessonDisplay}
                       </div>
                       <div className={styles.timeAndCapacity}>
                         {s.time}｜定員：{s.capacity}
@@ -177,4 +196,3 @@ export default function AdminAllReservationPage() {
     </div>
   );
 }
-

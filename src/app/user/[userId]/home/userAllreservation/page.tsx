@@ -58,9 +58,12 @@ export default function UserAllReservationPage() {
             date: schedule.date,
             time: schedule.time,
             lessonType: schedule.lessonType,
-            lessonName: teacherSnap.exists()
-              ? teacherSnap.data().lessonName
-              : '未設定',
+            lessonName:
+              schedule.classType === '体験クラス'
+                ? '体験クラス'
+                : teacherSnap.exists()
+                  ? teacherSnap.data().lessonName
+                  : '未設定',
           };
         })
       );
@@ -126,7 +129,6 @@ export default function UserAllReservationPage() {
       const updated = reservations.filter((r) => r.id !== reservationId);
       setReservations(updated);
 
-      // lessonNameMap 再構築
       const updatedMap: Record<string, string[]> = {};
       updated.forEach((r) => {
         if (!updatedMap[r.date]) updatedMap[r.date] = [];

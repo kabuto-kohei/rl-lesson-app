@@ -19,7 +19,7 @@ type BookingCalendarProps = {
 export default function BookingCalendar({
   teacherId,
   userId,
-  onDateSelect, // ✅ これが必要！
+  onDateSelect, 
 }: BookingCalendarProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());

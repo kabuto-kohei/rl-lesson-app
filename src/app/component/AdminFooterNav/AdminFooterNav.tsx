@@ -41,7 +41,7 @@ export default function AdminFooterNav() {
         className={`${styles.link} ${pathname.includes('/adminAddreservation') ? styles.active : ''}`}
       >
         <FontAwesomeIcon icon={faPlus} className={styles.icon} />
-        <span className={styles.label}>予約追加</span>
+        <span className={styles.label}>追加</span>
       </Link>
 
       <Link

@@ -1,0 +1,241 @@
+/* ======== ページ全体コンテナ ======== */
+.container {
+  padding: 24px;
+  max-width: 700px;
+  margin: 0 auto;
+  padding-bottom: 80px; /* フッター被り防止 */
+}
+
+/* ======== 見出し ======== */
+.heading {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.subheading {
+  font-size: 12px;
+  font-weight: normal;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #555;
+}
+
+/* ======== サブノート ======== */
+.subnote {
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+  margin: 8px 0 16px;
+}
+
+/* ======== カレンダー凡例（必要なら） ======== */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+  justify-content: center;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* ======== 詳細エリア ======== */
+.detail {
+  margin-top: 24px;
+  padding-bottom: 80px;
+}
+
+.dateTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.noReservation {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* ======== グループ単位表示用（講師ごと） ======== */
+.groupedList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.teacherGroup {
+  background-color: #f3f4f6;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.teacherName {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #2563eb;
+  text-align: left;
+}
+
+/* ======== 予約リスト ======== */
+.reservationList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reservationItem {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background-color: #f9f9f9;
+  text-align: left;
+}
+
+/* ======== 情報エリア ======== */
+.reservationInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lessonType {
+  font-size: 14px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.timeAndCapacity {
+  font-size: 14px;
+  color: #555;
+}
+
+.memo {
+  font-size: 13px;
+  color: #444;
+}
+
+/* ======== 選択ボタン（旧：予約ボタン） ======== */
+.reserveButton {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.reserveButton:hover {
+  background-color: #2563eb;
+}
+
+.reserveButton:disabled {
+  background-color: #a1a1aa;
+  cursor: not-allowed;
+}
+
+/* ======== モーダル ======== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-sizing: border-box;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.inputField {
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modalButton {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modalButton:disabled {
+  background-color: #a1a1aa;
+  cursor: not-allowed;
+}
+
+.modalClose {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  text-decoration: underline;
+}

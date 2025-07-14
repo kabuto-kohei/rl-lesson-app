@@ -1,6 +1,6 @@
 /* ====== ヘッダー固定表示 ====== */
 .header {
-  position: fixed; /* ← 固定表示に変更 */
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -8,9 +8,9 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  background-color: #fff; /* ← 背景を白にして読みやすく */
+  background-color: #fff;
   z-index: 1000;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); /* うっすら影を追加 */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .userInfo {
@@ -37,18 +37,19 @@
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center;          /* ← 中央寄せに戻す */
   align-items: center;
   height: 100vh;
   background-color: #f5f5f5;
-  padding-top: 96px; /* ← ヘッダー高さ分の余白を確保 */
+  padding-top: 88px;                /* ← ヘッダー分 + 少し余白 */
+  padding-bottom: 80px;             /* ← 下のフッターも考慮 */
   position: relative;
 }
 
 .inner {
   max-width: 280px;
   width: 100%;
-  padding: 24px;
+  padding: 20px;
   background-color: #ffffff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
