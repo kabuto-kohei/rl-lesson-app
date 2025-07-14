@@ -37,14 +37,15 @@
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: center;          /* ← 中央寄せに戻す */
+  justify-content: flex-start;  
   align-items: center;
   height: 100vh;
   background-color: #f5f5f5;
-  padding-top: 88px;                /* ← ヘッダー分 + 少し余白 */
-  padding-bottom: 80px;             /* ← 下のフッターも考慮 */
+  padding-top: 120px;             
+  padding-bottom: 60px;           
   position: relative;
 }
+
 
 .inner {
   max-width: 280px;
