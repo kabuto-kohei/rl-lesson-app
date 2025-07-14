@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 
-export default function AdminAddSelectPage() {
+function AdminAddSelectInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const teacherId = searchParams.get('teacherId');
@@ -35,5 +36,13 @@ export default function AdminAddSelectPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function AdminAddSelectPage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <AdminAddSelectInner />
+    </Suspense>
   );
 }
