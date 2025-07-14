@@ -1,12 +1,26 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 
 export default function AdminAddSelectPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const teacherId = searchParams.get('teacherId');
+  const [teacherId, setTeacherId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = searchParams.get('teacherId');
+    setTeacherId(id);
+  }, [searchParams]);
+
+  const handleGoTo = (type: 'trial' | 'rope' | 'school') => {
+    if (!teacherId) {
+      alert('講師IDが見つかりません。');
+      return;
+    }
+    router.push(`/admin/home/adminAddreservation/${type}?teacherId=${teacherId}`);
+  };
 
   if (!teacherId) {
     return (
@@ -15,10 +29,6 @@ export default function AdminAddSelectPage() {
       </div>
     );
   }
-
-  const handleGoTo = (type: 'trial' | 'rope' | 'school') => {
-    router.push(`/admin/home/adminAddreservation/${type}?teacherId=${teacherId}`);
-  };
 
   return (
     <div className={styles.container}>
@@ -30,10 +40,10 @@ export default function AdminAddSelectPage() {
           体験スクールを追加
         </button>
         <button className={styles.button} onClick={() => handleGoTo('rope')}>
-          ロープスクールを追加
+          ロープ体験・講習を追加
         </button>
         <button className={styles.button} onClick={() => handleGoTo('school')}>
-          スクール追加
+          スクールを追加
         </button>
       </div>
     </div>
