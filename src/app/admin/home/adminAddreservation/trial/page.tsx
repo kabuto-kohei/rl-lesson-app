@@ -1,24 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  addDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  Timestamp,
-} from 'firebase/firestore';
+import { addDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from '../trial/page.module.css';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function AdminAddTrialReservationPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const teacherId = searchParams.get('teacherId');
 
-  const teacherId = searchParams.get('teacherId'); // ← ここで取得
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
@@ -37,6 +30,10 @@ export default function AdminAddTrialReservationPage() {
       router.push('/admin/select');
     }
   }, [teacherId, router]);
+
+  if (!teacherId) {
+    return <p>読み込み中...</p>;
+  }
 
   const handleDateSelect = (date: Date) => {
     if (multiSelectMode) {
@@ -70,11 +67,13 @@ export default function AdminAddTrialReservationPage() {
     let successCount = 0;
 
     for (const date of selectedDates) {
-      const dateStr = date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).replaceAll('/', '-');
+      const dateStr = date
+        .toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        .replaceAll('/', '-');
 
       const q = query(
         collection(db, 'lessonSchedules'),
@@ -152,12 +151,16 @@ export default function AdminAddTrialReservationPage() {
 
       <label>
         <span>開始時間</span>
-        <select value={time} onChange={(e) => setTime(e.target.value)} className={styles.input}>
+        <select
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className={styles.input}
+        >
           <option value="">選択してください</option>
           {Array.from({ length: (22.5 - 9 + 1) * 2 }).map((_, i) => {
             const hour = 9 + Math.floor(i / 2);
-            const minute = i % 2 === 0 ? "00" : "30";
-            const h = String(hour).padStart(2, "0");
+            const minute = i % 2 === 0 ? '00' : '30';
+            const h = String(hour).padStart(2, '0');
             const timeStr = `${h}:${minute}`;
             return (
               <option key={timeStr} value={timeStr}>
@@ -192,14 +195,17 @@ export default function AdminAddTrialReservationPage() {
           >
             <option value="">選択してください</option>
             {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num}>{num}名</option>
+              <option key={num} value={num}>
+                {num}名
+              </option>
             ))}
           </select>
         </div>
 
         <div className={styles.formGroup}>
           <label className={styles.label}>メモ（任意）</label>
-          <textarea className={styles.input}
+          <textarea
+            className={styles.input}
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
             rows={2}

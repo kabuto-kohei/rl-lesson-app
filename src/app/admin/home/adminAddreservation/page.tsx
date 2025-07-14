@@ -1,21 +1,22 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
-function AdminAddSelectInner() {
+export default function AdminAddSelectPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const teacherId = searchParams.get('teacherId');
 
-  const handleGoTo = (type: 'trial' | 'rope' | 'school') => {
-    if (!teacherId) {
-      alert('講師IDが見つかりません。最初の選択画面に戻ってください。');
-      router.push('/admin/select');
-      return;
-    }
+  if (!teacherId) {
+    return (
+      <div className={styles.container}>
+        <p>講師IDが見つかりません。管理画面から遷移してください。</p>
+      </div>
+    );
+  }
 
+  const handleGoTo = (type: 'trial' | 'rope' | 'school') => {
     router.push(`/admin/home/adminAddreservation/${type}?teacherId=${teacherId}`);
   };
 
@@ -36,13 +37,5 @@ function AdminAddSelectInner() {
         </button>
       </div>
     </div>
-  );
-}
-
-export default function AdminAddSelectPage() {
-  return (
-    <Suspense fallback={<div>読み込み中...</div>}>
-      <AdminAddSelectInner />
-    </Suspense>
   );
 }
