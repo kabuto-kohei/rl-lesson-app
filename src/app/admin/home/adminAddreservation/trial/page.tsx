@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic'; // ←これがないとVercelのビルドで落ちる
+
 import { useEffect, useState } from 'react';
 import { addDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase';
