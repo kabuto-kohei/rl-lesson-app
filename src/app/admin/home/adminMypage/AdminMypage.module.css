@@ -58,22 +58,7 @@
   background-color: #45a049;
 }
 
-/* === モーダル背景 === */
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
+/* === 削除ボタン === */
 .deleteButton {
   background-color: #e53935;
   color: white;
@@ -90,6 +75,48 @@
   background-color: #c62828;
 }
 
+/* === 「全日程に戻る」ボタン === */
+.resetButton {
+  display: block;
+  margin: 1rem auto 1.5rem;
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.resetButton:hover {
+  background-color: #125ea9;
+}
+
+/* 選択された日付の見出し（任意） */
+.selectedDateHeading {
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* === モーダル背景 === */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -201,5 +228,10 @@
     width: 100%;
     font-size: 1rem;
     padding: 0.9rem;
+  }
+
+  .resetButton {
+    font-size: 1rem;
+    padding: 12px 16px;
   }
 }

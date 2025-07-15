@@ -6,7 +6,7 @@ import {
   getDocs,
   doc,
   updateDoc,
-  deleteDoc, // ← 追加
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -39,6 +39,7 @@ export default function AdminMypagePage() {
   const [userMap, setUserMap] = useState<Record<string, string>>({});
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -102,6 +103,11 @@ export default function AdminMypagePage() {
     return [...schedules].sort((a, b) => a.date.localeCompare(b.date));
   }, [schedules]);
 
+  const filteredSchedules = useMemo(() => {
+    if (!selectedDate) return sortedSchedules;
+    return sortedSchedules.filter(s => s.date === selectedDate);
+  }, [sortedSchedules, selectedDate]);
+
   const reservedDates = useMemo(() => {
     return Object.keys(lessonNameMap);
   }, [lessonNameMap]);
@@ -156,10 +162,13 @@ export default function AdminMypagePage() {
         <Calendar
           year={year}
           month={month}
-          selectedDates={[]}  
+          selectedDates={selectedDate ? [new Date(selectedDate)] : []}
           availableDates={reservedDates}
           teacherColorMap={lessonNameMap}
-          onDateSelect={() => {}}
+          onDateSelect={(date) => {
+            const iso = formatToLocalDateString(date);
+            setSelectedDate(iso);
+          }}
           goPrev={() => {
             if (month === 0) {
               setYear(y => y - 1);
@@ -180,7 +189,16 @@ export default function AdminMypagePage() {
         />
       </div>
 
-      {sortedSchedules.map((s) => {
+      {selectedDate && (
+        <button
+          className={styles.resetButton}
+          onClick={() => setSelectedDate(null)}
+        >
+          ◀ 全日程に戻る
+        </button>
+      )}
+
+      {filteredSchedules.map((s) => {
         const participants = bookingsMap[s.id] || [];
         const participantNames = participants.map(uid => userMap[uid] || '名前不明');
 
@@ -210,7 +228,7 @@ export default function AdminMypagePage() {
             <p className={styles.label}>参加者：</p>
             <ul className={styles.participants}>
               {participantNames.length > 0 ? (
-                participantNames.map((name, idx) => <li key={idx}>・{name}</li>)
+                participantNames.map((name, idx) => <li key={idx}>{name}</li>)
               ) : (
                 <li>なし</li>
               )}
@@ -318,4 +336,12 @@ function getLessonTypeLabel(type: string) {
     case 'both': return '両方';
     default: return '';
   }
+}
+
+
+function formatToLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
