@@ -33,30 +33,32 @@
   color: #333;
 }
 
-/* ====== メインレイアウト ====== */
+/* ====== レイアウト全体 ====== */
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;  
+  justify-content: flex-start;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #f5f5f5;
-  padding-top: 120px;             
-  padding-bottom: 60px;           
+  padding-top: 120px;
+  padding-bottom: 60px;
   position: relative;
 }
 
-
-.inner {
-  max-width: 280px;
+/* ====== 通常の白背景ボックス ====== */
+.box {
+  max-width: 320px;
   width: 100%;
-  padding: 20px;
   background-color: #ffffff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  text-align: center;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-sizing: border-box;
 }
 
+/* ====== 見出し・サブ見出し ====== */
 .heading {
   font-size: 20px;
   font-weight: bold;
@@ -64,7 +66,53 @@
   text-align: center;
 }
 
-/* ====== 共通ボタンスタイル ====== */
+.subheading {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.noSchedule {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280; /* グレー */
+  margin-top: 12px;
+}
+
+/* ====== スケジュールリスト ====== */
+.scheduleList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scheduleItem {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.lessonName {
+  font-weight: bold;
+  font-size: 15px;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.scheduleInfo {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+/* ====== ボタン共通 ====== */
 .button {
   width: 100%;
   padding: 12px;
@@ -73,13 +121,14 @@
   font-weight: bold;
   border: none;
   border-radius: 8px;
-  color: white;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
+/* ====== ボタン個別色 ====== */
 .reserveButton {
   background-color: #3b82f6;
+  color: white;
 }
 .reserveButton:hover {
   background-color: #2563eb;
@@ -87,6 +136,7 @@
 
 .confirmButton {
   background-color: #10b981;
+  color: white;
 }
 .confirmButton:hover {
   background-color: #059669;
@@ -94,6 +144,7 @@
 
 .userInfoButton {
   background-color: #f59e0b;
+  color: white;
 }
 .userInfoButton:hover {
   background-color: #d97706;
