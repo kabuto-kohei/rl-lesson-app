@@ -11,6 +11,8 @@ import {
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './AdminAllReservation.module.css';
+import lessonColorPalette from "@/app/component/lessonColer/lessonColors";
+
 
 type Schedule = {
   id: string;
@@ -33,14 +35,6 @@ export default function AdminAllReservationPage() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-
-  const lessonNameColorMap: Record<string, string> = {
-    'れおスク': '#fca5a5',
-    'そらスク': '#93c5fd',
-    'かぶスク': '#fcd34d',
-    'おーらんスクール': '#34d399',
-    '体験クラス': '#c4b5fd',
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,7 +131,7 @@ export default function AdminAllReservationPage() {
       />
 
       <div className={styles.legend}>
-        {Object.entries(lessonNameColorMap).map(([name, color], idx) => (
+        {Object.entries(lessonColorPalette).map(([name, color], idx) => (
           <div key={idx} className={styles.legendItem}>
             <span className={styles.circle} style={{ backgroundColor: color }} />：{name}
           </div>

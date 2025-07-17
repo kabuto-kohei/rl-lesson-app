@@ -3,6 +3,8 @@
 import React from "react";
 import styles from "./Calendar.module.css";
 import { getCalendarMatrix } from "@/app/component/utils/calendarUtils";
+import lessonColorPalette from "@/app/component/lessonColer/lessonColors";
+
 
 export type CalendarProps = {
   year: number;
@@ -33,15 +35,6 @@ export default function Calendar({
 
   const isClickable = (dateStr: string) => {
     return mode === "admin" || availableDates.includes(dateStr);
-  };
-
-  const lessonColorPalette: Record<string, string> = {
-    "れおスク": "#fca5a5",
-    "そらスク": "#93c5fd",
-    "かぶスク": "#fcd34d",
-    "おーらんスクール": "#34d399",
-    '体験クラス': '#c4b5fd',
-    "未設定": "gray",
   };
 
   return (
