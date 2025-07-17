@@ -112,6 +112,12 @@
   line-height: 1.4;
 }
 
+.memo {
+  font-size: 11px;
+  margin-top: 4px;
+  color: #374151;
+}
+
 /* ====== ボタン共通 ====== */
 .button {
   width: 100%;

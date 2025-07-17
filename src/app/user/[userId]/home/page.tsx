@@ -20,6 +20,7 @@ type Schedule = {
   time: string;
   teacherId: string;
   lessonType: string;
+  memo: string;
 };
 
 export default function UserHomePage() {
@@ -95,6 +96,7 @@ export default function UserHomePage() {
             time: data.time || '',
             teacherId,
             lessonType: data.lessonType || '',
+            memo: data.memo || '',
           });
         }
       });
@@ -143,8 +145,13 @@ export default function UserHomePage() {
                       {lessonNameMap[s.teacherId] || '不明スクール'}
                     </div>
                     <div className={styles.scheduleInfo}>
-                      {formatted}　{s.time}　（{typeLabel}）
+                      {formatted}{s.time}　（{typeLabel}）
                     </div>
+                    {s.memo && (
+                      <div className={styles.memo}>
+                        メモ：{s.memo}
+                      </div>
+                    )}
                   </li>
                 );
               })}
