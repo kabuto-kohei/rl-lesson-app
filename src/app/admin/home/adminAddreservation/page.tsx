@@ -39,9 +39,6 @@ export default function ClientWrapper() {
         <button className={styles.button} onClick={() => handleGoTo('trial')}>
           体験スクールを追加
         </button>
-        <button className={styles.button} onClick={() => handleGoTo('rope')}>
-          ロープ体験・講習を追加
-        </button>
         <button className={styles.button} onClick={() => handleGoTo('school')}>
           スクールを追加
         </button>

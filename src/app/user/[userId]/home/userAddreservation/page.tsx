@@ -23,9 +23,6 @@ export default function UserAddSelectPage() {
         <button className={styles.button} onClick={() => goTo('trial')}>
           スクール体験予約
         </button>
-        <button className={styles.button} onClick={() => goTo('rope')}>
-          ロープ講習予約
-        </button>
         <button className={styles.button} onClick={() => goTo('master')}>
           マスタークラス予約
         </button>
