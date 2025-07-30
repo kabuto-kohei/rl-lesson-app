@@ -165,10 +165,10 @@ export default function UserHomePage() {
             スクール日程
           </button>
           <button className={`${styles.button} ${styles.reserveButton}`} onClick={() => goTo('/home/userAddreservation')}>
-            スクール予約
+            体験予約
           </button>
           <button className={`${styles.button} ${styles.confirmButton}`} onClick={() => goTo('/home/userAllreservation')}>
-            予約確認
+            スクール確認
           </button>
           <button className={`${styles.button} ${styles.userInfoButton}`} onClick={() => goTo('/home/userMypage')}>
             マイページ

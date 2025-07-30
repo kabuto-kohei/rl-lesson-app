@@ -8,10 +8,15 @@ import {
   where,
   doc,
   getDoc,
+  addDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
+import { useParams } from 'next/navigation';
+import { Timestamp } from 'firebase/firestore';
+import lessonColorPalette from "@/app/component/lessonColer/lessonColors";
+
 
 type Teacher = {
   id: string;
@@ -32,6 +37,9 @@ type Schedule = {
 };
 
 export default function UserClassSelectPage() {
+  const params = useParams();
+  const userId = typeof params.userId === 'string' ? params.userId : '';
+
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
@@ -40,6 +48,8 @@ export default function UserClassSelectPage() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [participatedScheduleIds, setParticipatedScheduleIds] = useState<string[]>([]);
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchTeachers = async () => {
@@ -79,6 +89,23 @@ export default function UserClassSelectPage() {
 
     setSchedules(scheduleList);
 
+    const participationSnap = await getDocs(
+      query(collection(db, 'participations'), where('userId', '==', userId))
+    );
+    const participatedIds = participationSnap.docs.map((d) => d.data().scheduleId);
+    setParticipatedScheduleIds(participatedIds);
+
+    const attendanceCounter: Record<string, number> = {};
+    participationSnap.docs.forEach((doc) => {
+      const data = doc.data();
+      const sid = data.scheduleId;
+      const isAbsent = data.isAbsent;
+      if (!isAbsent) {
+        attendanceCounter[sid] = (attendanceCounter[sid] || 0) + 1;
+      }
+    });
+    setAttendanceMap(attendanceCounter);
+
     const tempMap: Record<string, Set<string>> = {};
     for (const s of scheduleList) {
       const teacherRef = doc(db, 'teacherId', s.teacherId);
@@ -117,18 +144,6 @@ export default function UserClassSelectPage() {
     }
   };
 
-  const getColorForLesson = (lessonName: string): string => {
-    const map: Record<string, string> = {
-      'れおスク': '#fca5a5',
-      'そらスク': '#93c5fd',
-      'かぶスク': '#fcd34d',
-      'おーらんスクール': '#34d399',
-      '体験クラス': '#c4b5fd',
-      '未設定': 'gray',
-    };
-    return map[lessonName] || '#ccc';
-  };
-
   const goPrev = () => {
     const prev = new Date(year, month - 1);
     setYear(prev.getFullYear());
@@ -139,6 +154,49 @@ export default function UserClassSelectPage() {
     const next = new Date(year, month + 1);
     setYear(next.getFullYear());
     setMonth(next.getMonth());
+  };
+
+  const handleParticipate = async (scheduleId: string) => {
+    if (!userId) {
+      alert('ユーザーIDが見つかりません');
+      return;
+    }
+    if (participatedScheduleIds.includes(scheduleId)) {
+      alert('すでに参加登録済みです');
+      return;
+    }
+
+    try {
+      const scheduleSnap = await getDoc(doc(db, 'lessonSchedules', scheduleId));
+      if (!scheduleSnap.exists()) return;
+      const schedule = scheduleSnap.data();
+      const capacity = schedule.capacity || 0;
+
+      const snap = await getDocs(
+        query(
+          collection(db, 'participations'),
+          where('scheduleId', '==', scheduleId),
+          where('isAbsent', '==', false)
+        )
+      );
+      if (snap.size >= capacity) {
+        alert('このスケジュールは満員です');
+        return;
+      }
+
+      await addDoc(collection(db, 'participations'), {
+        userId,
+        scheduleId,
+        isAbsent: false,
+        createdAt: Timestamp.now(),
+      });
+
+      alert('参加登録しました');
+      setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
+    } catch (err) {
+      console.error('参加登録エラー:', err);
+      alert('登録に失敗しました');
+    }
   };
 
   return (
@@ -183,7 +241,7 @@ export default function UserClassSelectPage() {
           {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
             <div className={styles.legend}>
               {Array.from(new Set(Object.values(lessonNameMap).flat())).map((lessonName, idx) => {
-                const color = getColorForLesson(lessonName);
+                const color = lessonColorPalette[lessonName] || '#ccc';
                 return (
                   <div key={idx} className={styles.legendItem}>
                     <span className={styles.circle} style={{ backgroundColor: color }} />
@@ -204,23 +262,36 @@ export default function UserClassSelectPage() {
                 <p className={styles.noReservation}>この日のスケジュールはありません</p>
               ) : (
                 <ul className={styles.reservationList}>
-                  {filteredSchedules.map((s) => (
-                    <li key={s.id} className={styles.reservationItem}>
-                      <div className={styles.reservationInfo}>
-                        <div className={styles.row}>
-                          <div className={styles.timeAndCapacity}>
-                            {s.time}｜定員：{s.capacity}
+                  {filteredSchedules.map((s) => {
+                    const isFull = (attendanceMap[s.id] || 0) >= s.capacity;
+                    const alreadyJoined = participatedScheduleIds.includes(s.id);
+
+                    return (
+                      <li key={s.id} className={styles.reservationItem}>
+                        <div className={styles.reservationInfo}>
+                          <div className={styles.row}>
+                            <div className={styles.timeAndCapacity}>
+                              {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - (attendanceMap[s.id] || 0))}名）
+                              {isFull && <span className={styles.fullLabel}>満員</span>}
+                            </div>
+                            <div className={styles.lessonType}>
+                              {getLessonTypeLabel(s.lessonType)}
+                            </div>
                           </div>
-                          <div className={styles.lessonType}>
-                            {getLessonTypeLabel(s.lessonType)}
-                          </div>
+                          {s.memo && (
+                            <div className={styles.memo}>メモ：{s.memo}</div>
+                          )}
                         </div>
-                        {s.memo && (
-                          <div className={styles.memo}>メモ：{s.memo}</div>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                        <button
+                          className={alreadyJoined ? styles.participatedButton : styles.button}
+                          onClick={() => handleParticipate(s.id)}
+                          disabled={alreadyJoined || isFull}
+                        >
+                          {alreadyJoined ? '参加済み' : isFull ? '満員' : '参加する'}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

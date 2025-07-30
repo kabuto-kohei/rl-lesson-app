@@ -4,9 +4,6 @@ import { useEffect, useState, useMemo } from 'react';
 import {
   collection,
   getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -22,9 +19,10 @@ type Schedule = {
   teacherId: string;
 };
 
-type Booking = {
-  scheduleId: string;
+type Participation = {
   userId: string;
+  scheduleId: string;
+  isAbsent: boolean;
 };
 
 type User = {
@@ -35,22 +33,23 @@ type User = {
 export default function AdminMypagePage() {
   const [teacherId, setTeacherId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [bookingsMap, setBookingsMap] = useState<Record<string, string[]>>({});
+  const [participantsMap, setParticipantsMap] = useState<Record<string, { attended: string[]; absent: string[] }>>({});
   const [userMap, setUserMap] = useState<Record<string, string>>({});
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
-  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
 
+  // teacherId取得
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('teacherId');
     if (id) setTeacherId(id);
   }, []);
 
+  // Firestoreから全データ取得
   useEffect(() => {
     if (!teacherId) return;
 
@@ -79,14 +78,20 @@ export default function AdminMypagePage() {
       });
       setLessonNameMap(finalMap);
 
-      const bookingSnap = await getDocs(collection(db, 'bookings'));
-      const bookings = bookingSnap.docs.map(doc => doc.data() as Booking);
-      const bookingMap: Record<string, string[]> = {};
-      bookings.forEach(b => {
-        if (!bookingMap[b.scheduleId]) bookingMap[b.scheduleId] = [];
-        bookingMap[b.scheduleId].push(b.userId);
+      const participationSnap = await getDocs(collection(db, 'participations'));
+      const participantData: Record<string, { attended: string[]; absent: string[] }> = {};
+      participationSnap.docs.forEach(doc => {
+        const data = doc.data() as Participation;
+        if (!participantData[data.scheduleId]) {
+          participantData[data.scheduleId] = { attended: [], absent: [] };
+        }
+        if (data.isAbsent) {
+          participantData[data.scheduleId].absent.push(data.userId);
+        } else {
+          participantData[data.scheduleId].attended.push(data.userId);
+        }
       });
-      setBookingsMap(bookingMap);
+      setParticipantsMap(participantData);
 
       const userSnap = await getDocs(collection(db, 'users'));
       const users: Record<string, string> = {};
@@ -111,48 +116,6 @@ export default function AdminMypagePage() {
   const reservedDates = useMemo(() => {
     return Object.keys(lessonNameMap);
   }, [lessonNameMap]);
-
-  const handleSaveEdit = async () => {
-    if (!editingSchedule) return;
-
-    try {
-      await updateDoc(
-        doc(db, 'lessonSchedules', editingSchedule.id),
-        {
-          date: editingSchedule.date,
-          time: editingSchedule.time,
-          capacity: editingSchedule.capacity,
-          lessonType: editingSchedule.lessonType,
-          memo: editingSchedule.memo || '',
-        }
-      );
-
-      setSchedules((prev) =>
-        prev.map((s) =>
-          s.id === editingSchedule.id ? editingSchedule : s
-        )
-      );
-
-      alert('更新しました');
-      setEditingSchedule(null);
-    } catch (error) {
-      console.error('更新エラー:', error);
-      alert('更新に失敗しました');
-    }
-  };
-
-  const handleDeleteSchedule = async (id: string) => {
-    if (!confirm('本当に削除しますか？')) return;
-
-    try {
-      await deleteDoc(doc(db, 'lessonSchedules', id));
-      setSchedules((prev) => prev.filter((s) => s.id !== id));
-      alert('削除しました');
-    } catch (error) {
-      console.error('削除エラー:', error);
-      alert('削除に失敗しました');
-    }
-  };
 
   return (
     <main className={styles.container}>
@@ -190,136 +153,43 @@ export default function AdminMypagePage() {
       </div>
 
       {selectedDate && (
-        <button
-          className={styles.resetButton}
-          onClick={() => setSelectedDate(null)}
-        >
-          ◀ 全日程に戻る
+        <button className={styles.resetButton} onClick={() => setSelectedDate(null)}>
+         日程一覧
         </button>
       )}
 
       {filteredSchedules.map((s) => {
-        const participants = bookingsMap[s.id] || [];
-        const participantNames = participants.map(uid => userMap[uid] || '名前不明');
+        const attendance = participantsMap[s.id]?.attended || [];
+        const absentees = participantsMap[s.id]?.absent || [];
+        const isFull = attendance.length >= s.capacity;
 
         return (
           <div key={s.id} className={styles.card}>
-            <h2 className={styles.date}>
-              📝 {formatDate(s.date)}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  className={styles.editButton}
-                  onClick={() => setEditingSchedule(s)}
-                >
-                  編集
-                </button>
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => handleDeleteSchedule(s.id)}
-                >
-                  削除
-                </button>
-              </div>
-            </h2>
+            <h2 className={styles.date}>📝 {formatDate(s.date)}</h2>
             <p className={styles.detail}>
-              時間：{s.time}（定員{s.capacity}）{getLessonTypeLabel(s.lessonType)}
+              時間：{s.time}（定員 {s.capacity}｜参加 {attendance.length}｜休み {absentees.length}）
+              {isFull && <span className={styles.fullLabel}>（満員）</span>}
               {s.memo && `｜メモ：${s.memo}`}
             </p>
             <p className={styles.label}>参加者：</p>
             <ul className={styles.participants}>
-              {participantNames.length > 0 ? (
-                participantNames.map((name, idx) => <li key={idx}>{name}</li>)
-              ) : (
-                <li>なし</li>
-              )}
+              {attendance.map(uid => (
+                <li key={uid}>{userMap[uid] || '名前不明'}</li>
+              ))}
             </ul>
+            {absentees.length > 0 && (
+              <>
+                <p className={styles.label}>おやすみ：</p>
+                <ul className={styles.participants}>
+                  {absentees.map(uid => (
+                    <li key={uid}>{userMap[uid] || '名前不明'}</li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         );
       })}
-
-      {editingSchedule && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setEditingSchedule(null)}
-        >
-          <div
-            className={styles.modalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2>スケジュール編集</h2>
-
-            <label>
-              日付:
-              <input
-                type="date"
-                value={editingSchedule.date}
-                onChange={(e) =>
-                  setEditingSchedule({ ...editingSchedule, date: e.target.value })
-                }
-              />
-            </label>
-
-            <label>
-              時間:
-              <input
-                type="text"
-                value={editingSchedule.time}
-                onChange={(e) =>
-                  setEditingSchedule({ ...editingSchedule, time: e.target.value })
-                }
-              />
-            </label>
-
-            <label>
-              種別:
-              <select
-                value={editingSchedule.lessonType}
-                onChange={(e) =>
-                  setEditingSchedule({ ...editingSchedule, lessonType: e.target.value })
-                }
-              >
-                <option value="">選択してください</option>
-                <option value="boulder">ボルダー</option>
-                <option value="lead">リード</option>
-                <option value="both">両方</option>
-              </select>
-            </label>
-
-            <label>
-              定員:
-              <input
-                type="number"
-                value={editingSchedule.capacity}
-                onChange={(e) =>
-                  setEditingSchedule({
-                    ...editingSchedule,
-                    capacity: parseInt(e.target.value, 10) || 0,
-                  })
-                }
-              />
-            </label>
-
-            <label>
-              メモ:
-              <input
-                type="text"
-                value={editingSchedule.memo || ''}
-                onChange={(e) =>
-                  setEditingSchedule({
-                    ...editingSchedule,
-                    memo: e.target.value,
-                  })
-                }
-              />
-            </label>
-
-            <div className={styles.modalActions}>
-              <button onClick={handleSaveEdit}>保存</button>
-              <button onClick={() => setEditingSchedule(null)}>キャンセル</button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
@@ -328,16 +198,6 @@ function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
 }
-
-function getLessonTypeLabel(type: string) {
-  switch (type) {
-    case 'boulder': return 'ボルダー';
-    case 'lead': return 'リード';
-    case 'both': return '両方';
-    default: return '';
-  }
-}
-
 
 function formatToLocalDateString(date: Date): string {
   const y = date.getFullYear();

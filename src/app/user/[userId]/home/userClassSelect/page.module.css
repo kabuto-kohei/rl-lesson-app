@@ -1,7 +1,7 @@
 .container {
   max-width: 600px;
   margin: 0 auto;
-  padding: 64px 24px 64px; 
+  padding: 64px 24px 64px;
   font-family: sans-serif;
   position: relative;
   box-sizing: border-box;
@@ -33,12 +33,25 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 24px;
+  margin-top: 16px;
   transition: background-color 0.2s;
 }
 
 .button:hover {
   background-color: #2563eb;
+}
+
+.participatedButton {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #9ca3af;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: not-allowed;
+  margin-top: 16px;
 }
 
 .calendarWrapper {
@@ -92,14 +105,19 @@
 
 .reservationItem {
   margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
 }
 
 .reservationInfo {
-  display: block; /* ← flexを解除して縦積みに */
+  display: block;
+  margin-bottom: 2px; 
 }
 
 .row {
-  display: flex; /* ← 時間｜定員｜種別を横並びに */
+  display: flex;
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
@@ -136,4 +154,14 @@
   font-size: 12px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+.fullLabel {
+  color: white;
+  background-color: red;
+  font-size: 12px;
+  padding: 2px 6px;
+  margin-left: 8px;
+  border-radius: 4px;
+  font-weight: bold;
 }

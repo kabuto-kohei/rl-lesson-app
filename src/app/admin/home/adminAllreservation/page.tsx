@@ -26,11 +26,18 @@ type Schedule = {
   createdAt?: Timestamp;
 };
 
+type Participation = {
+  userId: string;
+  scheduleId: string;
+  isAbsent: boolean;
+};
+
 export default function AdminAllReservationPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
   const [lessonNameByScheduleId, setLessonNameByScheduleId] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, number>>({});
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -38,12 +45,22 @@ export default function AdminAllReservationPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const snapshot = await getDocs(collection(db, 'lessonSchedules'));
-      const scheduleList: Schedule[] = snapshot.docs.map(doc => ({
+      const scheduleSnap = await getDocs(collection(db, 'lessonSchedules'));
+      const scheduleList: Schedule[] = scheduleSnap.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Schedule[];
       setSchedules(scheduleList);
+
+      const participationSnap = await getDocs(collection(db, 'participations'));
+      const attendance: Record<string, number> = {};
+      participationSnap.docs.forEach(doc => {
+        const data = doc.data() as Participation;
+        if (!data.isAbsent) {
+          attendance[data.scheduleId] = (attendance[data.scheduleId] || 0) + 1;
+        }
+      });
+      setAttendanceMap(attendance);
 
       const lessonMap: Record<string, Set<string>> = {};
       const lessonByScheduleId: Record<string, string> = {};
@@ -164,21 +181,19 @@ export default function AdminAllReservationPage() {
                     ? '体験クラス'
                     : `${lessonNameByScheduleId[s.id]}（${getLessonTypeLabel(s.lessonType)}）`;
 
+                const attendance = attendanceMap[s.id] || 0;
+                const isFull = attendance >= s.capacity;
+
                 return (
                   <li key={s.id} className={styles.reservationItem}>
                     <div className={styles.reservationInfo}>
-                      <div className={styles.lessonName}>
-                        {lessonDisplay}
-                      </div>
+                      <div className={styles.lessonName}>{lessonDisplay}</div>
                       <div className={styles.timeAndCapacity}>
-                        {s.time}｜定員：{s.capacity}
+                        {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - attendance)}名）
+                        {isFull && <span className={styles.fullLabel}>満員</span>}
                       </div>
-                      <div className={styles.createdAt}>
-                        作成日時：{createdAtStr}
-                      </div>
-                      {s.memo && (
-                        <div className={styles.memo}>メモ：{s.memo}</div>
-                      )}
+                      <div className={styles.createdAt}>作成日時：{createdAtStr}</div>
+                      {s.memo && <div className={styles.memo}>メモ：{s.memo}</div>}
                     </div>
                   </li>
                 );

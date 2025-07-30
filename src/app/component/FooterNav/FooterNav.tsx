@@ -41,7 +41,7 @@ export default function FooterNav() {
         className={`${styles.link} ${pathname === `/user/${userId}/home/userAddreservation` ? styles.active : ''}`}
       >
         <FontAwesomeIcon icon={faPen} className={styles.icon} />
-        <span className={styles.label}>予約</span>
+        <span className={styles.label}>体験</span>
       </Link>
 
       <Link

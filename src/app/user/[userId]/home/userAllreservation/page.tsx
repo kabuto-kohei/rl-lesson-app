@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { db } from '@/firebase';
 import {
+  doc,
+  getDoc,
+  updateDoc,
   collection,
   getDocs,
   query,
   where,
-  doc,
-  getDoc,
-  deleteDoc,
 } from 'firebase/firestore';
 import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './page.module.css';
@@ -23,56 +23,56 @@ export default function UserAllReservationPage() {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
 
-  type Reservation = {
+  type Participation = {
     id: string;
     date: string;
     time: string;
     lessonType: string;
     lessonName: string;
+    isAbsent: boolean;
+    scheduleId: string;
   };
 
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [participations, setParticipations] = useState<Participation[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [lessonNameMap, setLessonNameMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    const fetchReservations = async () => {
+    const fetchParticipations = async () => {
       if (!userId) return;
 
-      const q = query(collection(db, 'bookings'), where('userId', '==', userId));
+      const q = query(collection(db, 'participations'), where('userId', '==', userId));
       const snapshot = await getDocs(q);
 
-      const results = await Promise.all(
-        snapshot.docs.map(async (docSnap) => {
-          const data = docSnap.data();
-          const scheduleRef = doc(db, 'lessonSchedules', data.scheduleId);
-          const scheduleSnap = await getDoc(scheduleRef);
-          if (!scheduleSnap.exists()) return null;
+      const results: Participation[] = [];
 
-          const schedule = scheduleSnap.data();
-          const teacherRef = doc(db, 'teacherId', schedule.teacherId);
-          const teacherSnap = await getDoc(teacherRef);
+      for (const docSnap of snapshot.docs) {
+        const participationId = docSnap.id;
+        const data = docSnap.data();
+        const scheduleRef = doc(db, 'lessonSchedules', data.scheduleId);
+        const scheduleSnap = await getDoc(scheduleRef);
+        if (!scheduleSnap.exists()) continue;
 
-          return {
-            id: docSnap.id,
-            date: schedule.date,
-            time: schedule.time,
-            lessonType: schedule.lessonType,
-            lessonName:
-              schedule.classType === '体験クラス'
-                ? '体験クラス'
-                : teacherSnap.exists()
-                  ? teacherSnap.data().lessonName
-                  : '未設定',
-          };
-        })
-      );
+        const schedule = scheduleSnap.data();
+        const teacherRef = doc(db, 'teacherId', schedule.teacherId);
+        const teacherSnap = await getDoc(teacherRef);
 
-      const filtered = results.filter((r): r is Reservation => r !== null);
-      setReservations(filtered);
+        results.push({
+          id: participationId,
+          scheduleId: data.scheduleId,
+          date: schedule.date,
+          time: schedule.time,
+          lessonType: schedule.lessonType,
+          lessonName: teacherSnap.exists() ? teacherSnap.data().lessonName : '未設定',
+          isAbsent: data.isAbsent || false,
+        });
+      }
 
+      setParticipations(results);
+
+      // カレンダー用
       const map: Record<string, string[]> = {};
-      filtered.forEach((r) => {
+      results.forEach((r) => {
         if (!map[r.date]) map[r.date] = [];
         if (!map[r.date].includes(r.lessonName)) {
           map[r.date].push(r.lessonName);
@@ -81,7 +81,7 @@ export default function UserAllReservationPage() {
       setLessonNameMap(map);
     };
 
-    fetchReservations();
+    fetchParticipations();
   }, [userId]);
 
   const formatDate = (date: Date): string => {
@@ -92,18 +92,14 @@ export default function UserAllReservationPage() {
   };
 
   const selectedDateStr = selectedDate ? formatDate(selectedDate) : '';
-  const filteredReservations = reservations.filter((r) => r.date === selectedDateStr);
+  const filtered = participations.filter((p) => p.date === selectedDateStr);
 
   const getLessonTypeLabel = (type: string) => {
     switch (type) {
-      case 'boulder':
-        return 'ボルダー';
-      case 'lead':
-        return 'リード';
-      case 'both':
-        return 'ボルダー・リード';
-      default:
-        return '不明';
+      case 'boulder': return 'ボルダー';
+      case 'lead': return 'リード';
+      case 'both': return 'ボルダー・リード';
+      default: return '不明';
     }
   };
 
@@ -119,33 +115,25 @@ export default function UserAllReservationPage() {
     setMonth(next.getMonth());
   };
 
-  const handleDelete = async (reservationId: string) => {
-    const confirmDelete = window.confirm('この予約を削除しますか？');
-    if (!confirmDelete) return;
-
+  const toggleAbsent = async (participationId: string, currentStatus: boolean) => {
     try {
-      await deleteDoc(doc(db, 'bookings', reservationId));
-      alert('予約を削除しました');
-      const updated = reservations.filter((r) => r.id !== reservationId);
-      setReservations(updated);
-
-      const updatedMap: Record<string, string[]> = {};
-      updated.forEach((r) => {
-        if (!updatedMap[r.date]) updatedMap[r.date] = [];
-        if (!updatedMap[r.date].includes(r.lessonName)) {
-          updatedMap[r.date].push(r.lessonName);
-        }
+      await updateDoc(doc(db, 'participations', participationId), {
+        isAbsent: !currentStatus,
       });
-      setLessonNameMap(updatedMap);
-    } catch (error) {
-      console.error('削除エラー:', error);
-      alert('削除に失敗しました');
+      setParticipations((prev) =>
+        prev.map((p) =>
+          p.id === participationId ? { ...p, isAbsent: !currentStatus } : p
+        )
+      );
+    } catch (err) {
+      console.error('おやすみ更新エラー:', err);
+      alert('変更に失敗しました');
     }
   };
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.heading}>予約確認</h1>
+      <h1 className={styles.heading}>参加予定</h1>
 
       <Calendar
         year={year}
@@ -164,27 +152,28 @@ export default function UserAllReservationPage() {
           <p className={styles.dateTitle}>
             {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月
             {selectedDate.getDate()}日
-            {filteredReservations.length > 0 && ` ${filteredReservations[0].time}`}
           </p>
 
-          {filteredReservations.length === 0 ? (
-            <p className={styles.noReservation}>この日に予約はありません</p>
+          {filtered.length === 0 ? (
+            <p className={styles.noReservation}>この日に参加予定はありません</p>
           ) : (
             <ul className={styles.reservationList}>
-              {filteredReservations.map((r) => (
-                <li key={r.id} className={styles.reservationItem}>
+              {filtered.map((p) => (
+                <li key={p.id} className={styles.reservationItem}>
                   <div className={styles.reservationInfo}>
-                    <span className={styles.lessonMark}>◯</span>
+                    <span className={styles.lessonMark}></span>
                     <span>
-                      {r.lessonName}（{getLessonTypeLabel(r.lessonType)}）
+                      {p.lessonName}（{getLessonTypeLabel(p.lessonType)}）
                     </span>
                   </div>
                   <button
-                    onClick={() => handleDelete(r.id)}
-                    className={styles.deleteButton}
-                  >
-                    削除
-                  </button>
+                    onClick={() => toggleAbsent(p.id, p.isAbsent)}
+                    className={`${styles.statusButton} ${
+                    p.isAbsent ? styles.statusAbsent : styles.statusParticipated
+                    }`}
+                    >
+                    {p.isAbsent ? '参加' : 'おやすみ'}
+                    </button>
                 </li>
               ))}
             </ul>
@@ -194,3 +183,4 @@ export default function UserAllReservationPage() {
     </div>
   );
 }
+
