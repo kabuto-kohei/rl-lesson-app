@@ -122,16 +122,22 @@ export default function AdminMypagePage() {
     setSchedules(prev => prev.filter(s => s.id !== scheduleId));
   };
 
-  const handleSaveEdit = async (updated: Schedule) => {
-    await updateDoc(doc(db, 'lessonSchedules', updated.id), {
-      time: updated.time,
-      capacity: updated.capacity,
-      memo: updated.memo,
-      lessonType: updated.lessonType,
-    });
-    setSchedules(prev => prev.map(s => (s.id === updated.id ? updated : s)));
-    setEditingSchedule(null);
-  };
+ const handleSaveEdit = async (updated: Schedule) => {
+  await updateDoc(doc(db, 'lessonSchedules', updated.id), {
+    time: updated.time,
+    capacity: updated.capacity,
+    memo: updated.memo,
+    lessonType: updated.lessonType, 
+  });
+
+  setSchedules(prev =>
+    prev.map(s =>
+      s.id === updated.id ? updated : s
+    )
+  );
+  setEditingSchedule(null);
+};
+
 
   const sortedSchedules = useMemo(() => [...schedules].sort((a, b) => a.date.localeCompare(b.date)), [schedules]);
   const filteredSchedules = useMemo(() => selectedDate ? sortedSchedules.filter(s => s.date === selectedDate) : sortedSchedules, [sortedSchedules, selectedDate]);
@@ -224,20 +230,19 @@ export default function AdminMypagePage() {
         />
       </label>
 
-      <label>
-        種別：
-        <select
-          value={editingSchedule.lessonType}
-          onChange={(e) =>
-            setEditingSchedule({ ...editingSchedule, lessonType: e.target.value })
-          }
-        >
-          <option value="ボルダー">ボルダー</option>
-          <option value="リード">リード</option>
-          <option value="両方">両方</option>
-        </select>
-      </label>
-
+        <label>
+            種別：
+            <select
+              value={editingSchedule.lessonType}
+              onChange={(e) =>
+                setEditingSchedule({ ...editingSchedule, lessonType: e.target.value })
+              }
+            >
+              <option value="boulder">ボルダー</option>
+              <option value="lead">リード</option>
+              <option value="both">両方</option>
+            </select>
+          </label>
       <label>
         メモ：
         <input
