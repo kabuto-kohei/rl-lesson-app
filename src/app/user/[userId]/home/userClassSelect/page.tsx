@@ -17,7 +17,6 @@ import { useParams } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore';
 import lessonColorPalette from "@/app/component/lessonColer/lessonColors";
 
-
 type Teacher = {
   id: string;
   name: string;
@@ -89,22 +88,31 @@ export default function UserClassSelectPage() {
 
     setSchedules(scheduleList);
 
-    const participationSnap = await getDocs(
-      query(collection(db, 'participations'), where('userId', '==', userId))
-    );
-    const participatedIds = participationSnap.docs.map((d) => d.data().scheduleId);
-    setParticipatedScheduleIds(participatedIds);
+      const participationSnap = await getDocs(collection(db, 'participations'));
 
-    const attendanceCounter: Record<string, number> = {};
-    participationSnap.docs.forEach((doc) => {
-      const data = doc.data();
-      const sid = data.scheduleId;
-      const isAbsent = data.isAbsent;
-      if (!isAbsent) {
-        attendanceCounter[sid] = (attendanceCounter[sid] || 0) + 1;
-      }
-    });
-    setAttendanceMap(attendanceCounter);
+      const participatedIds: string[] = [];
+      const attendanceCounter: Record<string, number> = {};
+      const idMap: Record<string, string> = {};
+
+      participationSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        const sid = data.scheduleId;
+
+        // 自分の予約は保存
+        if (data.userId === userId) {
+          participatedIds.push(sid);
+          idMap[sid] = doc.id;
+        }
+
+        // 出席者の人数をカウント
+        if (!data.isAbsent) {
+          attendanceCounter[sid] = (attendanceCounter[sid] || 0) + 1;
+        }
+      });
+
+      setParticipatedScheduleIds(participatedIds);
+      setAttendanceMap(attendanceCounter);
+
 
     const tempMap: Record<string, Set<string>> = {};
     for (const s of scheduleList) {
@@ -121,6 +129,69 @@ export default function UserClassSelectPage() {
       finalMap[date] = Array.from(set);
     });
     setLessonNameMap(finalMap);
+  };
+
+  const handleParticipate = async (scheduleId: string) => {
+    if (!userId) {
+      alert('ユーザーIDが見つかりません');
+      return;
+    }
+    if (participatedScheduleIds.includes(scheduleId)) {
+      alert('すでに登録済みです');
+      return;
+    }
+    try {
+      const scheduleSnap = await getDoc(doc(db, 'lessonSchedules', scheduleId));
+      if (!scheduleSnap.exists()) return;
+      const schedule = scheduleSnap.data();
+      const capacity = schedule.capacity || 0;
+      const snap = await getDocs(
+        query(
+          collection(db, 'participations'),
+          where('scheduleId', '==', scheduleId),
+          where('isAbsent', '==', false)
+        )
+      );
+      if (snap.size >= capacity) {
+        alert('このスケジュールは満員です');
+        return;
+      }
+      await addDoc(collection(db, 'participations'), {
+        userId,
+        scheduleId,
+        isAbsent: false,
+        createdAt: Timestamp.now(),
+      });
+      alert('参加登録しました');
+      setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
+    } catch (err) {
+      console.error('参加登録エラー:', err);
+      alert('登録に失敗しました');
+    }
+  };
+
+  const handleAbsent = async (scheduleId: string) => {
+    if (!userId) {
+      alert('ユーザーIDが見つかりません');
+      return;
+    }
+    if (participatedScheduleIds.includes(scheduleId)) {
+      alert('すでに登録済みです');
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'participations'), {
+        userId,
+        scheduleId,
+        isAbsent: true,
+        createdAt: Timestamp.now(),
+      });
+      alert('おやすみとして登録しました');
+      setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
+    } catch (err) {
+      console.error('おやすみ登録エラー:', err);
+      alert('登録に失敗しました');
+    }
   };
 
   const formatDate = (date: Date): string => {
@@ -154,49 +225,6 @@ export default function UserClassSelectPage() {
     const next = new Date(year, month + 1);
     setYear(next.getFullYear());
     setMonth(next.getMonth());
-  };
-
-  const handleParticipate = async (scheduleId: string) => {
-    if (!userId) {
-      alert('ユーザーIDが見つかりません');
-      return;
-    }
-    if (participatedScheduleIds.includes(scheduleId)) {
-      alert('すでに参加登録済みです');
-      return;
-    }
-
-    try {
-      const scheduleSnap = await getDoc(doc(db, 'lessonSchedules', scheduleId));
-      if (!scheduleSnap.exists()) return;
-      const schedule = scheduleSnap.data();
-      const capacity = schedule.capacity || 0;
-
-      const snap = await getDocs(
-        query(
-          collection(db, 'participations'),
-          where('scheduleId', '==', scheduleId),
-          where('isAbsent', '==', false)
-        )
-      );
-      if (snap.size >= capacity) {
-        alert('このスケジュールは満員です');
-        return;
-      }
-
-      await addDoc(collection(db, 'participations'), {
-        userId,
-        scheduleId,
-        isAbsent: false,
-        createdAt: Timestamp.now(),
-      });
-
-      alert('参加登録しました');
-      setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
-    } catch (err) {
-      console.error('参加登録エラー:', err);
-      alert('登録に失敗しました');
-    }
   };
 
   return (
@@ -282,13 +310,22 @@ export default function UserClassSelectPage() {
                             <div className={styles.memo}>メモ：{s.memo}</div>
                           )}
                         </div>
-                        <button
-                          className={alreadyJoined ? styles.participatedButton : styles.button}
-                          onClick={() => handleParticipate(s.id)}
-                          disabled={alreadyJoined || isFull}
-                        >
-                          {alreadyJoined ? '参加済み' : isFull ? '満員' : '参加する'}
-                        </button>
+                        <div className={styles.buttonGroup}>
+                          <button
+                            className={styles.button}
+                            onClick={() => handleParticipate(s.id)}
+                            disabled={alreadyJoined || isFull}
+                          >
+                            参加する
+                          </button>
+                          <button
+                            className={styles.absentButton}
+                            onClick={() => handleAbsent(s.id)}
+                            disabled={alreadyJoined}
+                          >
+                            おやすみ
+                          </button>
+                        </div>
                       </li>
                     );
                   })}

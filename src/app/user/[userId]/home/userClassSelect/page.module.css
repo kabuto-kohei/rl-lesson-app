@@ -24,7 +24,6 @@
 }
 
 .button {
-  width: 100%;
   padding: 12px;
   font-size: 16px;
   font-weight: bold;
@@ -33,11 +32,12 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin-top: 16px;
   transition: background-color 0.2s;
+  width: 100%;
+  margin-top: 16px;
 }
 
-.button:hover {
+.button:hover:enabled {
   background-color: #2563eb;
 }
 
@@ -52,6 +52,42 @@
   border-radius: 8px;
   cursor: not-allowed;
   margin-top: 16px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* group内のボタンだけ均等幅 */
+.buttonGroup .button,
+.buttonGroup .absentButton {
+  flex: 1;
+}
+
+.absentButton {
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #d1d5db;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 16px;
+
+}
+
+.absentButton:hover:enabled {
+  background-color: #9ca3af;
+}
+
+.absentButton:disabled {
+  background-color: #e5e7eb;
+  color: #999;
+  cursor: not-allowed;
 }
 
 .calendarWrapper {
