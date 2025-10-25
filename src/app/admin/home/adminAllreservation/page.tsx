@@ -13,7 +13,6 @@ import Calendar from '@/app/component/Calendar/Calendar';
 import styles from './AdminAllReservation.module.css';
 import lessonColorPalette from "@/app/component/lessonColer/lessonColors";
 
-
 type Schedule = {
   id: string;
   date: string;
@@ -45,23 +44,33 @@ export default function AdminAllReservationPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      // 1) 全スケジュール取得
       const scheduleSnap = await getDocs(collection(db, 'lessonSchedules'));
-      const scheduleList: Schedule[] = scheduleSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Schedule[];
+      const scheduleList: Schedule[] = scheduleSnap.docs.map(d => ({
+        id: d.id,
+        ...(d.data() as Omit<Schedule, 'id'>),
+      }));
       setSchedules(scheduleList);
 
+      // 2) 出欠取得 → 出席のみカウント（過去の重複に備え userId を去重）
       const participationSnap = await getDocs(collection(db, 'participations'));
-      const attendance: Record<string, number> = {};
-      participationSnap.docs.forEach(doc => {
-        const data = doc.data() as Participation;
+      const attendanceSets: Record<string, Set<string>> = {}; // scheduleId -> Set<userId>
+
+      participationSnap.docs.forEach(d => {
+        const data = d.data() as Participation;
         if (!data.isAbsent) {
-          attendance[data.scheduleId] = (attendance[data.scheduleId] || 0) + 1;
+          if (!attendanceSets[data.scheduleId]) attendanceSets[data.scheduleId] = new Set();
+          attendanceSets[data.scheduleId].add(data.userId);
         }
+      });
+
+      const attendance: Record<string, number> = {};
+      Object.entries(attendanceSets).forEach(([sid, set]) => {
+        attendance[sid] = set.size;
       });
       setAttendanceMap(attendance);
 
+      // 3) カレンダー色分けのための lessonName マップ
       const lessonMap: Record<string, Set<string>> = {};
       const lessonByScheduleId: Record<string, string> = {};
 
@@ -74,7 +83,7 @@ export default function AdminAllReservationPage() {
           const teacherRef = doc(db, 'teacherId', s.teacherId);
           const teacherSnap = await getDoc(teacherRef);
           if (teacherSnap.exists()) {
-            const teacherData = teacherSnap.data();
+            const teacherData = teacherSnap.data() as Partial<{ lessonName: string }>;
             lessonName = teacherData.lessonName || '未設定';
           }
         }
@@ -166,7 +175,7 @@ export default function AdminAllReservationPage() {
           ) : (
             <ul className={styles.reservationList}>
               {filteredSchedules.map((s) => {
-                const createdAtStr = s.createdAt?.toDate
+                const createdAtStr = (s.createdAt instanceof Timestamp)
                   ? s.createdAt.toDate().toLocaleString('ja-JP', {
                       year: 'numeric',
                       month: '2-digit',
