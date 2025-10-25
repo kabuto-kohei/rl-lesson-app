@@ -84,6 +84,12 @@ export default function UserClassSelectPage() {
     fetchTeachers();
   }, []);
 
+  // 配列を10件ずつに分割（where('in') の制限対策）
+  const chunk = <T,>(arr: T[], size = 10): T[][] =>
+    Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+      arr.slice(i * size, (i + 1) * size)
+    );
+
   const handleSubmit = async () => {
     if (!selectedTeacherId) {
       alert('クラスを選択してください');
@@ -104,24 +110,39 @@ export default function UserClassSelectPage() {
     })) as Schedule[]).filter((s) => s.classType !== '体験クラス');
     setSchedules(scheduleList);
 
-    // 参加状況と出席人数（isAbsent:false のみカウント）
-    const participationSnap = await getDocs(collection(db, 'participations'));
-    const participatedIds: string[] = [];
+    // --- 出席人数（isAbsent:false）のユーザー去重 & 自分の参加済み去重 ---
+    const attendanceSets: Record<string, Set<string>> = {}; // scheduleId -> Set<userId>
+    const participatedIdsSet = new Set<string>();
+
+    const scheduleIds = scheduleList.map(s => s.id);
+    if (scheduleIds.length > 0) {
+      for (const ids of chunk(scheduleIds, 10)) {
+        const qPart = query(
+          collection(db, 'participations'),
+          where('scheduleId', 'in', ids)
+        );
+        const partSnap = await getDocs(qPart);
+        partSnap.docs.forEach((d) => {
+          const data = d.data() as { userId: string; scheduleId: string; isAbsent?: boolean };
+          const sid = data.scheduleId;
+
+          if (data.userId === userId) {
+            participatedIdsSet.add(sid);
+          }
+          if (!data.isAbsent) {
+            if (!attendanceSets[sid]) attendanceSets[sid] = new Set();
+            attendanceSets[sid].add(data.userId);
+          }
+        });
+      }
+    }
+
     const attendanceCounter: Record<string, number> = {};
-
-    participationSnap.docs.forEach((d) => {
-      const data = d.data() as { userId: string; scheduleId: string; isAbsent?: boolean };
-      const sid = data.scheduleId;
-
-      if (data.userId === userId) {
-        participatedIds.push(sid);
-      }
-      if (!data.isAbsent) {
-        attendanceCounter[sid] = (attendanceCounter[sid] || 0) + 1;
-      }
+    Object.entries(attendanceSets).forEach(([sid, set]) => {
+      attendanceCounter[sid] = set.size;
     });
 
-    setParticipatedScheduleIds(participatedIds);
+    setParticipatedScheduleIds(Array.from(participatedIdsSet));
     setAttendanceMap(attendanceCounter);
 
     // カレンダーの◯色用：date → lessonName[] マップ
@@ -185,14 +206,43 @@ export default function UserClassSelectPage() {
         { merge: false }
       );
 
-      alert('参加登録しました');
+      // ローカルの出席人数を即時反映
       setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
-
-      // ローカルの出席人数も反映（即時UI更新）
       setAttendanceMap(prev => ({
         ...prev,
         [scheduleId]: (prev[scheduleId] || 0) + 1,
       }));
+
+      // 事後検証（同時実行の保険）：満員オーバーならロールバック（おやすみに戻す）
+      const qAfter = query(
+        collection(db, 'participations'),
+        where('scheduleId', '==', scheduleId),
+        where('isAbsent', '==', false)
+      );
+      const afterSnap = await getDocs(qAfter);
+      const scheduleSnap2 = await getDoc(doc(db, 'lessonSchedules', scheduleId));
+      const capacity2 = (scheduleSnap2.data() as { capacity?: number })?.capacity ?? 0;
+
+      if (afterSnap.size > capacity2) {
+        await setDoc(
+          doc(db, 'participations', `${scheduleId}_${userId}`),
+          {
+            userId,
+            scheduleId,
+            isAbsent: true,
+            createdAt: Timestamp.now(),
+          },
+          { merge: true }
+        );
+        setParticipatedScheduleIds(prev => prev.filter(id => id !== scheduleId));
+        setAttendanceMap(prev => ({
+          ...prev,
+          [scheduleId]: Math.max(0, (prev[scheduleId] || 1) - 1),
+        }));
+        alert('同時操作により満員になったため、参加登録を取り消しました。');
+      } else {
+        alert('参加登録しました');
+      }
     } catch (err) {
       console.error('参加登録エラー:', err);
       alert('登録に失敗しました');
