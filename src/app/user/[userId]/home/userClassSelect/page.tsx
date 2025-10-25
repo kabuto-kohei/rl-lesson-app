@@ -8,7 +8,7 @@ import {
   where,
   doc,
   getDoc,
-  addDoc,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
@@ -49,15 +49,31 @@ export default function UserClassSelectPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [participatedScheduleIds, setParticipatedScheduleIds] = useState<string[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, number>>({});
+  // 連打ガード
+  const [busySet, setBusySet] = useState<Set<string>>(new Set());
+
+  const withBusy = async (sid: string, fn: () => Promise<void>) => {
+    if (busySet.has(sid)) return;
+    setBusySet(prev => new Set(prev).add(sid));
+    try {
+      await fn();
+    } finally {
+      setBusySet(prev => {
+        const next = new Set(prev);
+        next.delete(sid);
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchTeachers = async () => {
       const snapshot = await getDocs(collection(db, 'teacherId'));
       const data = snapshot.docs
-        .map((doc) => {
-          const d = doc.data() as { name: string; ClassType: string };
+        .map((docSnap) => {
+          const d = docSnap.data() as { name: string; ClassType: string };
           return {
-            id: doc.id,
+            id: docSnap.id,
             name: d.name,
             classType: d.ClassType || '未設定',
           };
@@ -76,51 +92,48 @@ export default function UserClassSelectPage() {
     setShowCalendar(true);
     setSelectedDate(null);
 
-    const q = query(
+    // 対象講師のスケジュール取得
+    const qSchedules = query(
       collection(db, 'lessonSchedules'),
       where('teacherId', '==', selectedTeacherId)
     );
-    const snapshot = await getDocs(q);
-    const scheduleList = (snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    const scheduleSnap = await getDocs(qSchedules);
+    const scheduleList = (scheduleSnap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
     })) as Schedule[]).filter((s) => s.classType !== '体験クラス');
-
     setSchedules(scheduleList);
 
-      const participationSnap = await getDocs(collection(db, 'participations'));
+    // 参加状況と出席人数（isAbsent:false のみカウント）
+    const participationSnap = await getDocs(collection(db, 'participations'));
+    const participatedIds: string[] = [];
+    const attendanceCounter: Record<string, number> = {};
 
-      const participatedIds: string[] = [];
-      const attendanceCounter: Record<string, number> = {};
-      const idMap: Record<string, string> = {};
+    participationSnap.docs.forEach((d) => {
+      const data = d.data() as { userId: string; scheduleId: string; isAbsent?: boolean };
+      const sid = data.scheduleId;
 
-      participationSnap.docs.forEach((doc) => {
-        const data = doc.data();
-        const sid = data.scheduleId;
+      if (data.userId === userId) {
+        participatedIds.push(sid);
+      }
+      if (!data.isAbsent) {
+        attendanceCounter[sid] = (attendanceCounter[sid] || 0) + 1;
+      }
+    });
 
-        // 自分の予約は保存
-        if (data.userId === userId) {
-          participatedIds.push(sid);
-          idMap[sid] = doc.id;
-        }
+    setParticipatedScheduleIds(participatedIds);
+    setAttendanceMap(attendanceCounter);
 
-        // 出席者の人数をカウント
-        if (!data.isAbsent) {
-          attendanceCounter[sid] = (attendanceCounter[sid] || 0) + 1;
-        }
-      });
-
-      setParticipatedScheduleIds(participatedIds);
-      setAttendanceMap(attendanceCounter);
-
-
+    // カレンダーの◯色用：date → lessonName[] マップ
     const tempMap: Record<string, Set<string>> = {};
     for (const s of scheduleList) {
       const teacherRef = doc(db, 'teacherId', s.teacherId);
       const teacherSnap = await getDoc(teacherRef);
+      const teacherSnapData = teacherSnap.data() as Partial<{ lessonName: string }>;
       const lessonName = teacherSnap.exists()
-        ? teacherSnap.data().lessonName || '未設定'
+        ? teacherSnapData.lessonName || '未設定'
         : '未設定';
+
       if (!tempMap[s.date]) tempMap[s.date] = new Set();
       tempMap[s.date].add(lessonName);
     }
@@ -140,11 +153,14 @@ export default function UserClassSelectPage() {
       alert('すでに登録済みです');
       return;
     }
+
     try {
+      // 定員チェック
       const scheduleSnap = await getDoc(doc(db, 'lessonSchedules', scheduleId));
       if (!scheduleSnap.exists()) return;
-      const schedule = scheduleSnap.data();
+      const schedule = scheduleSnap.data() as { capacity?: number };
       const capacity = schedule.capacity || 0;
+
       const snap = await getDocs(
         query(
           collection(db, 'participations'),
@@ -156,14 +172,27 @@ export default function UserClassSelectPage() {
         alert('このスケジュールは満員です');
         return;
       }
-      await addDoc(collection(db, 'participations'), {
-        userId,
-        scheduleId,
-        isAbsent: false,
-        createdAt: Timestamp.now(),
-      });
+
+      // 固定IDで一意化（重複カウント防止）
+      await setDoc(
+        doc(db, 'participations', `${scheduleId}_${userId}`),
+        {
+          userId,
+          scheduleId,
+          isAbsent: false,
+          createdAt: Timestamp.now(),
+        },
+        { merge: false }
+      );
+
       alert('参加登録しました');
       setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
+
+      // ローカルの出席人数も反映（即時UI更新）
+      setAttendanceMap(prev => ({
+        ...prev,
+        [scheduleId]: (prev[scheduleId] || 0) + 1,
+      }));
     } catch (err) {
       console.error('参加登録エラー:', err);
       alert('登録に失敗しました');
@@ -179,15 +208,22 @@ export default function UserClassSelectPage() {
       alert('すでに登録済みです');
       return;
     }
+
     try {
-      await addDoc(collection(db, 'participations'), {
-        userId,
-        scheduleId,
-        isAbsent: true,
-        createdAt: Timestamp.now(),
-      });
+      await setDoc(
+        doc(db, 'participations', `${scheduleId}_${userId}`),
+        {
+          userId,
+          scheduleId,
+          isAbsent: true,
+          createdAt: Timestamp.now(),
+        },
+        { merge: false }
+      );
+
       alert('おやすみとして登録しました');
       setParticipatedScheduleIds((prev) => [...prev, scheduleId]);
+      // おやすみは出席人数に影響しないので attendanceMap は変更なし
     } catch (err) {
       console.error('おやすみ登録エラー:', err);
       alert('登録に失敗しました');
@@ -238,6 +274,8 @@ export default function UserClassSelectPage() {
           setSelectedDate(null);
           setSchedules([]);
           setLessonNameMap({});
+          setParticipatedScheduleIds([]);
+          setAttendanceMap({});
         }}
         className={styles.selectBox}
       >
@@ -291,15 +329,17 @@ export default function UserClassSelectPage() {
               ) : (
                 <ul className={styles.reservationList}>
                   {filteredSchedules.map((s) => {
-                    const isFull = (attendanceMap[s.id] || 0) >= s.capacity;
+                    const currentAttend = attendanceMap[s.id] || 0;
+                    const isFull = currentAttend >= s.capacity;
                     const alreadyJoined = participatedScheduleIds.includes(s.id);
+                    const isBusy = busySet.has(s.id);
 
                     return (
                       <li key={s.id} className={styles.reservationItem}>
                         <div className={styles.reservationInfo}>
                           <div className={styles.row}>
                             <div className={styles.timeAndCapacity}>
-                              {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - (attendanceMap[s.id] || 0))}名）
+                              {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - currentAttend)}名）
                               {isFull && <span className={styles.fullLabel}>満員</span>}
                             </div>
                             <div className={styles.lessonType}>
@@ -313,17 +353,17 @@ export default function UserClassSelectPage() {
                         <div className={styles.buttonGroup}>
                           <button
                             className={styles.button}
-                            onClick={() => handleParticipate(s.id)}
-                            disabled={alreadyJoined || isFull}
+                            onClick={() => withBusy(s.id, () => handleParticipate(s.id))}
+                            disabled={alreadyJoined || isFull || isBusy}
                           >
-                            参加する
+                            {isBusy ? '処理中…' : '参加する'}
                           </button>
                           <button
                             className={styles.absentButton}
-                            onClick={() => handleAbsent(s.id)}
-                            disabled={alreadyJoined}
+                            onClick={() => withBusy(s.id, () => handleAbsent(s.id))}
+                            disabled={alreadyJoined || isBusy}
                           >
-                            おやすみ
+                            {isBusy ? '処理中…' : 'おやすみ'}
                           </button>
                         </div>
                       </li>
