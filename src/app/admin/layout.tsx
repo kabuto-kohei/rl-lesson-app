@@ -1,9 +1,6 @@
-'use client';
-
 import { Geist, Geist_Mono } from "next/font/google";
-import { usePathname } from 'next/navigation';
-import AdminFooterNav from '@/app/component/AdminFooterNav/AdminFooterNav';
-import '../globals.css';
+import "../globals.css";
+import AdminAuthGuard from "./AdminAuthGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,13 +17,9 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const hideFooter = pathname === '/admin/select';
-
   return (
-    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      {children}
-      {!hideFooter && <AdminFooterNav />}
-    </body>
+    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <AdminAuthGuard>{children}</AdminAuthGuard>
+    </div>
   );
 }

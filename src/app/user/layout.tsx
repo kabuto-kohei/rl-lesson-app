@@ -1,13 +1,6 @@
-'use client';
-
-import '@fortawesome/fontawesome-svg-core/styles.css';
-import { config } from '@fortawesome/fontawesome-svg-core';
-config.autoAddCss = false;
-
 import { Geist, Geist_Mono } from "next/font/google";
-import { usePathname } from 'next/navigation';
-import FooterNav from '@/app/component/FooterNav/FooterNav';
 import "../globals.css";
+import AuthGuard from "./AuthGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,17 +14,14 @@ const geistMono = Geist_Mono({
 
 export default function UserLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const pathname = usePathname();
-  const hideFooterPages = ['/user/login', '/user/register'];
-  const hideFooter = hideFooterPages.includes(pathname);
-
+}) {
   return (
-    <div lang="ja" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      {children}
-      {!hideFooter && <FooterNav />}
-    </div>
+    <html lang="ja">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthGuard>{children}</AuthGuard>
+      </body>
+    </html>
   );
 }
