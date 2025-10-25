@@ -49,9 +49,13 @@ export default function UserClassSelectPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [participatedScheduleIds, setParticipatedScheduleIds] = useState<string[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, number>>({});
+
+  // ローディング状態
+  const [loadingTeachers, setLoadingTeachers] = useState<boolean>(true);
+  const [loadingSchedules, setLoadingSchedules] = useState<boolean>(false);
+
   // 連打ガード
   const [busySet, setBusySet] = useState<Set<string>>(new Set());
-
   const withBusy = async (sid: string, fn: () => Promise<void>) => {
     if (busySet.has(sid)) return;
     setBusySet(prev => new Set(prev).add(sid));
@@ -68,18 +72,23 @@ export default function UserClassSelectPage() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const snapshot = await getDocs(collection(db, 'teacherId'));
-      const data = snapshot.docs
-        .map((docSnap) => {
-          const d = docSnap.data() as { name: string; ClassType: string };
-          return {
-            id: docSnap.id,
-            name: d.name,
-            classType: d.ClassType || '未設定',
-          };
-        })
-        .filter((teacher) => teacher.classType !== '体験クラス');
-      setTeachers(data);
+      setLoadingTeachers(true);
+      try {
+        const snapshot = await getDocs(collection(db, 'teacherId'));
+        const data = snapshot.docs
+          .map((docSnap) => {
+            const d = docSnap.data() as { name: string; ClassType: string };
+            return {
+              id: docSnap.id,
+              name: d.name,
+              classType: d.ClassType || '未設定',
+            };
+          })
+          .filter((teacher) => teacher.classType !== '体験クラス');
+        setTeachers(data);
+      } finally {
+        setLoadingTeachers(false);
+      }
     };
     fetchTeachers();
   }, []);
@@ -97,72 +106,77 @@ export default function UserClassSelectPage() {
     }
     setShowCalendar(true);
     setSelectedDate(null);
+    setLoadingSchedules(true);
 
-    // 対象講師のスケジュール取得
-    const qSchedules = query(
-      collection(db, 'lessonSchedules'),
-      where('teacherId', '==', selectedTeacherId)
-    );
-    const scheduleSnap = await getDocs(qSchedules);
-    const scheduleList = (scheduleSnap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    })) as Schedule[]).filter((s) => s.classType !== '体験クラス');
-    setSchedules(scheduleList);
+    try {
+      // 対象講師のスケジュール取得
+      const qSchedules = query(
+        collection(db, 'lessonSchedules'),
+        where('teacherId', '==', selectedTeacherId)
+      );
+      const scheduleSnap = await getDocs(qSchedules);
+      const scheduleList = (scheduleSnap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as Schedule[]).filter((s) => s.classType !== '体験クラス');
+      setSchedules(scheduleList);
 
-    // --- 出席人数（isAbsent:false）のユーザー去重 & 自分の参加済み去重 ---
-    const attendanceSets: Record<string, Set<string>> = {}; // scheduleId -> Set<userId>
-    const participatedIdsSet = new Set<string>();
+      // --- 出席人数（isAbsent:false）のユーザー去重 & 自分の参加済み去重 ---
+      const attendanceSets: Record<string, Set<string>> = {}; // scheduleId -> Set<userId>
+      const participatedIdsSet = new Set<string>();
 
-    const scheduleIds = scheduleList.map(s => s.id);
-    if (scheduleIds.length > 0) {
-      for (const ids of chunk(scheduleIds, 10)) {
-        const qPart = query(
-          collection(db, 'participations'),
-          where('scheduleId', 'in', ids)
-        );
-        const partSnap = await getDocs(qPart);
-        partSnap.docs.forEach((d) => {
-          const data = d.data() as { userId: string; scheduleId: string; isAbsent?: boolean };
-          const sid = data.scheduleId;
+      const scheduleIds = scheduleList.map(s => s.id);
+      if (scheduleIds.length > 0) {
+        for (const ids of chunk(scheduleIds, 10)) {
+          const qPart = query(
+            collection(db, 'participations'),
+            where('scheduleId', 'in', ids)
+          );
+          const partSnap = await getDocs(qPart);
+          partSnap.docs.forEach((d) => {
+            const data = d.data() as { userId: string; scheduleId: string; isAbsent?: boolean };
+            const sid = data.scheduleId;
 
-          if (data.userId === userId) {
-            participatedIdsSet.add(sid);
-          }
-          if (!data.isAbsent) {
-            if (!attendanceSets[sid]) attendanceSets[sid] = new Set();
-            attendanceSets[sid].add(data.userId);
-          }
-        });
+            if (data.userId === userId) {
+              participatedIdsSet.add(sid);
+            }
+            if (!data.isAbsent) {
+              if (!attendanceSets[sid]) attendanceSets[sid] = new Set();
+              attendanceSets[sid].add(data.userId);
+            }
+          });
+        }
       }
+
+      const attendanceCounter: Record<string, number> = {};
+      Object.entries(attendanceSets).forEach(([sid, set]) => {
+        attendanceCounter[sid] = set.size;
+      });
+
+      setParticipatedScheduleIds(Array.from(participatedIdsSet));
+      setAttendanceMap(attendanceCounter);
+
+      // カレンダーの◯色用：date → lessonName[] マップ
+      const tempMap: Record<string, Set<string>> = {};
+      for (const s of scheduleList) {
+        const teacherRef = doc(db, 'teacherId', s.teacherId);
+        const teacherSnap = await getDoc(teacherRef);
+        const teacherSnapData = teacherSnap.data() as Partial<{ lessonName: string }>;
+        const lessonName = teacherSnap.exists()
+          ? teacherSnapData.lessonName || '未設定'
+          : '未設定';
+
+        if (!tempMap[s.date]) tempMap[s.date] = new Set();
+        tempMap[s.date].add(lessonName);
+      }
+      const finalMap: Record<string, string[]> = {};
+      Object.entries(tempMap).forEach(([date, set]) => {
+        finalMap[date] = Array.from(set);
+      });
+      setLessonNameMap(finalMap);
+    } finally {
+      setLoadingSchedules(false);
     }
-
-    const attendanceCounter: Record<string, number> = {};
-    Object.entries(attendanceSets).forEach(([sid, set]) => {
-      attendanceCounter[sid] = set.size;
-    });
-
-    setParticipatedScheduleIds(Array.from(participatedIdsSet));
-    setAttendanceMap(attendanceCounter);
-
-    // カレンダーの◯色用：date → lessonName[] マップ
-    const tempMap: Record<string, Set<string>> = {};
-    for (const s of scheduleList) {
-      const teacherRef = doc(db, 'teacherId', s.teacherId);
-      const teacherSnap = await getDoc(teacherRef);
-      const teacherSnapData = teacherSnap.data() as Partial<{ lessonName: string }>;
-      const lessonName = teacherSnap.exists()
-        ? teacherSnapData.lessonName || '未設定'
-        : '未設定';
-
-      if (!tempMap[s.date]) tempMap[s.date] = new Set();
-      tempMap[s.date].add(lessonName);
-    }
-    const finalMap: Record<string, string[]> = {};
-    Object.entries(tempMap).forEach(([date, set]) => {
-      finalMap[date] = Array.from(set);
-    });
-    setLessonNameMap(finalMap);
   };
 
   const handleParticipate = async (scheduleId: string) => {
@@ -213,7 +227,7 @@ export default function UserClassSelectPage() {
         [scheduleId]: (prev[scheduleId] || 0) + 1,
       }));
 
-      // 事後検証（同時実行の保険）：満員オーバーならロールバック（おやすみに戻す）
+      // 事後検証：満員オーバーならロールバック
       const qAfter = query(
         collection(db, 'participations'),
         where('scheduleId', '==', scheduleId),
@@ -313,9 +327,23 @@ export default function UserClassSelectPage() {
     setMonth(next.getMonth());
   };
 
+  // ① 初回：講師取得中は画面中央にスピナー
+  if (loadingTeachers) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.halfCircleSpinner}>
+          <div className={styles.circle + ' ' + styles.circle1}></div>
+          <div className={styles.circle + ' ' + styles.circle2}></div>
+        </div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <h2 className={styles.heading}>クラスを選択してください</h2>
+
       <select
         value={selectedTeacherId}
         onChange={(e) => {
@@ -336,94 +364,106 @@ export default function UserClassSelectPage() {
           </option>
         ))}
       </select>
-      <button onClick={handleSubmit} className={styles.button}>
-        このクラスの日程を表示
+
+      <button onClick={handleSubmit} className={styles.button} disabled={!selectedTeacherId || loadingSchedules}>
+        {loadingSchedules ? '読み込み中…' : 'このクラスの日程を表示'}
       </button>
 
+      {/* ② カレンダー表示領域：選択後の読み込み中はスピナー */}
       {showCalendar && (
-        <>
-          <Calendar
-            year={year}
-            month={month}
-            selectedDates={selectedDate ? [selectedDate] : []}
-            availableDates={Object.keys(lessonNameMap)}
-            teacherColorMap={lessonNameMap}
-            onDateSelect={setSelectedDate}
-            goPrev={goPrev}
-            goNext={goNext}
-            mode="user"
-          />
-
-          {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
-            <div className={styles.legend}>
-              {Array.from(new Set(Object.values(lessonNameMap).flat())).map((lessonName, idx) => {
-                const color = lessonColorPalette[lessonName] || '#ccc';
-                return (
-                  <div key={idx} className={styles.legendItem}>
-                    <span className={styles.circle} style={{ backgroundColor: color }} />
-                    ：{lessonName}
-                  </div>
-                );
-              })}
+        loadingSchedules ? (
+          <div className={styles.loadingBlock}>
+            <div className={styles.halfCircleSpinner}>
+              <div className={styles.circle + ' ' + styles.circle1}></div>
+              <div className={styles.circle + ' ' + styles.circle2}></div>
             </div>
-          )}
+            <p>Loading...</p>
+          </div>
+        ) : (
+          <>
+            <Calendar
+              year={year}
+              month={month}
+              selectedDates={selectedDate ? [selectedDate] : []}
+              availableDates={Object.keys(lessonNameMap)}
+              teacherColorMap={lessonNameMap}
+              onDateSelect={setSelectedDate}
+              goPrev={goPrev}
+              goNext={goNext}
+              mode="user"
+            />
 
-          {selectedDate && (
-            <div className={styles.detail}>
-              <p className={styles.dateTitle}>
-                {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
-              </p>
+            {lessonNameMap && Object.values(lessonNameMap).length > 0 && (
+              <div className={styles.legend}>
+                {Array.from(new Set(Object.values(lessonNameMap).flat())).map((lessonName, idx) => {
+                  const color = lessonColorPalette[lessonName] || '#ccc';
+                  return (
+                    <div key={idx} className={styles.legendItem}>
+                      <span className={styles.circleDot} style={{ backgroundColor: color }} />
+                      ：{lessonName}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-              {filteredSchedules.length === 0 ? (
-                <p className={styles.noReservation}>この日のスケジュールはありません</p>
-              ) : (
-                <ul className={styles.reservationList}>
-                  {filteredSchedules.map((s) => {
-                    const currentAttend = attendanceMap[s.id] || 0;
-                    const isFull = currentAttend >= s.capacity;
-                    const alreadyJoined = participatedScheduleIds.includes(s.id);
-                    const isBusy = busySet.has(s.id);
+            {selectedDate && (
+              <div className={styles.detail}>
+                <p className={styles.dateTitle}>
+                  {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
+                </p>
 
-                    return (
-                      <li key={s.id} className={styles.reservationItem}>
-                        <div className={styles.reservationInfo}>
-                          <div className={styles.row}>
-                            <div className={styles.timeAndCapacity}>
-                              {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - currentAttend)}名）
-                              {isFull && <span className={styles.fullLabel}>満員</span>}
+                {filteredSchedules.length === 0 ? (
+                  <p className={styles.noReservation}>この日のスケジュールはありません</p>
+                ) : (
+                  <ul className={styles.reservationList}>
+                    {filteredSchedules.map((s) => {
+                      const currentAttend = attendanceMap[s.id] || 0;
+                      const isFull = currentAttend >= s.capacity;
+                      const alreadyJoined = participatedScheduleIds.includes(s.id);
+                      const isBusy = busySet.has(s.id);
+
+                      return (
+                        <li key={s.id} className={styles.reservationItem}>
+                          <div className={styles.reservationInfo}>
+                            <div className={styles.row}>
+                              <div className={styles.timeAndCapacity}>
+                                {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - currentAttend)}名）
+                                {isFull && <span className={styles.fullLabel}>満員</span>}
+                              </div>
+                              <div className={styles.lessonType}>
+                                {getLessonTypeLabel(s.lessonType)}
+                              </div>
                             </div>
-                            <div className={styles.lessonType}>
-                              {getLessonTypeLabel(s.lessonType)}
-                            </div>
+                            {s.memo && (
+                              <div className={styles.memo}>メモ：{s.memo}</div>
+                            )}
                           </div>
-                          {s.memo && (
-                            <div className={styles.memo}>メモ：{s.memo}</div>
-                          )}
-                        </div>
-                        <div className={styles.buttonGroup}>
-                          <button
-                            className={styles.button}
-                            onClick={() => withBusy(s.id, () => handleParticipate(s.id))}
-                            disabled={alreadyJoined || isFull || isBusy}
-                          >
-                            {isBusy ? '処理中…' : '参加する'}
-                          </button>
-                          <button
-                            className={styles.absentButton}
-                            onClick={() => withBusy(s.id, () => handleAbsent(s.id))}
-                            disabled={alreadyJoined || isBusy}
-                          >
-                            {isBusy ? '処理中…' : 'おやすみ'}
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          )}
-        </>
+                          <div className={styles.buttonGroup}>
+                            <button
+                              className={styles.button}
+                              onClick={() => withBusy(s.id, () => handleParticipate(s.id))}
+                              disabled={alreadyJoined || isFull || isBusy}
+                            >
+                              {isBusy ? '処理中…' : '参加する'}
+                            </button>
+                            <button
+                              className={styles.absentButton}
+                              onClick={() => withBusy(s.id, () => handleAbsent(s.id))}
+                              disabled={alreadyJoined || isBusy}
+                            >
+                              {isBusy ? '処理中…' : 'おやすみ'}
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </>
+        )
       )}
     </div>
   );

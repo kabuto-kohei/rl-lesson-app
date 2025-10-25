@@ -89,3 +89,53 @@
   font-size: 13px;
   color: #444;
 }
+
+/* 画面中央のローディング */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 10px;
+  color: #555;
+  font-weight: bold;
+}
+
+/* ===== Half Circle Spinner (#3b82f6) ===== */
+.halfCircleSpinner,
+.halfCircleSpinner * {
+  box-sizing: border-box;
+}
+
+.halfCircleSpinner {
+  width: 60px;
+  height: 60px;
+  border-radius: 100%;
+  position: relative;
+}
+
+/* Legend の .circle と衝突しないよう専用クラス名に */
+.spinnerCircle {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  border: calc(60px / 10) solid transparent;
+}
+
+.spinnerCircle1 {
+  border-top-color: #3b82f6; /* 指定カラー */
+  animation: half-circle-spinner-animation 1s infinite;
+}
+
+.spinnerCircle2 {
+  border-bottom-color: #3b82f6; /* 指定カラー */
+  animation: half-circle-spinner-animation 1s infinite alternate;
+}
+
+@keyframes half-circle-spinner-animation {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

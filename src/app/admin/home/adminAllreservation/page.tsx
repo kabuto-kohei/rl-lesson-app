@@ -37,6 +37,7 @@ export default function AdminAllReservationPage() {
   const [lessonNameByScheduleId, setLessonNameByScheduleId] = useState<Record<string, string>>({});
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState<boolean>(true); // ← 追加
 
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -44,63 +45,68 @@ export default function AdminAllReservationPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1) 全スケジュール取得
-      const scheduleSnap = await getDocs(collection(db, 'lessonSchedules'));
-      const scheduleList: Schedule[] = scheduleSnap.docs.map(d => ({
-        id: d.id,
-        ...(d.data() as Omit<Schedule, 'id'>),
-      }));
-      setSchedules(scheduleList);
+      setLoading(true);
+      try {
+        // 1) 全スケジュール取得
+        const scheduleSnap = await getDocs(collection(db, 'lessonSchedules'));
+        const scheduleList: Schedule[] = scheduleSnap.docs.map(d => ({
+          id: d.id,
+          ...(d.data() as Omit<Schedule, 'id'>),
+        }));
+        setSchedules(scheduleList);
 
-      // 2) 出欠取得 → 出席のみカウント（過去の重複に備え userId を去重）
-      const participationSnap = await getDocs(collection(db, 'participations'));
-      const attendanceSets: Record<string, Set<string>> = {}; // scheduleId -> Set<userId>
+        // 2) 出欠取得 → 出席のみカウント（userId 去重）
+        const participationSnap = await getDocs(collection(db, 'participations'));
+        const attendanceSets: Record<string, Set<string>> = {};
 
-      participationSnap.docs.forEach(d => {
-        const data = d.data() as Participation;
-        if (!data.isAbsent) {
-          if (!attendanceSets[data.scheduleId]) attendanceSets[data.scheduleId] = new Set();
-          attendanceSets[data.scheduleId].add(data.userId);
-        }
-      });
-
-      const attendance: Record<string, number> = {};
-      Object.entries(attendanceSets).forEach(([sid, set]) => {
-        attendance[sid] = set.size;
-      });
-      setAttendanceMap(attendance);
-
-      // 3) カレンダー色分けのための lessonName マップ
-      const lessonMap: Record<string, Set<string>> = {};
-      const lessonByScheduleId: Record<string, string> = {};
-
-      for (const s of scheduleList) {
-        let lessonName = '未設定';
-
-        if (s.classType === '体験クラス') {
-          lessonName = '体験クラス';
-        } else {
-          const teacherRef = doc(db, 'teacherId', s.teacherId);
-          const teacherSnap = await getDoc(teacherRef);
-          if (teacherSnap.exists()) {
-            const teacherData = teacherSnap.data() as Partial<{ lessonName: string }>;
-            lessonName = teacherData.lessonName || '未設定';
+        participationSnap.docs.forEach(d => {
+          const data = d.data() as Participation;
+          if (!data.isAbsent) {
+            if (!attendanceSets[data.scheduleId]) attendanceSets[data.scheduleId] = new Set();
+            attendanceSets[data.scheduleId].add(data.userId);
           }
+        });
+
+        const attendance: Record<string, number> = {};
+        Object.entries(attendanceSets).forEach(([sid, set]) => {
+          attendance[sid] = set.size;
+        });
+        setAttendanceMap(attendance);
+
+        // 3) カレンダー色分けのための lessonName マップ
+        const lessonMap: Record<string, Set<string>> = {};
+        const lessonByScheduleId: Record<string, string> = {};
+
+        for (const s of scheduleList) {
+          let lessonName = '未設定';
+
+          if (s.classType === '体験クラス') {
+            lessonName = '体験クラス';
+          } else {
+            const teacherRef = doc(db, 'teacherId', s.teacherId);
+            const teacherSnap = await getDoc(teacherRef);
+            if (teacherSnap.exists()) {
+              const teacherData = teacherSnap.data() as Partial<{ lessonName: string }>;
+              lessonName = teacherData.lessonName || '未設定';
+            }
+          }
+
+          lessonByScheduleId[s.id] = lessonName;
+
+          if (!lessonMap[s.date]) lessonMap[s.date] = new Set();
+          lessonMap[s.date].add(lessonName);
         }
 
-        lessonByScheduleId[s.id] = lessonName;
+        const finalMap: Record<string, string[]> = {};
+        Object.entries(lessonMap).forEach(([date, set]) => {
+          finalMap[date] = Array.from(set);
+        });
 
-        if (!lessonMap[s.date]) lessonMap[s.date] = new Set();
-        lessonMap[s.date].add(lessonName);
+        setLessonNameMap(finalMap);
+        setLessonNameByScheduleId(lessonByScheduleId);
+      } finally {
+        setLoading(false);
       }
-
-      const finalMap: Record<string, string[]> = {};
-      Object.entries(lessonMap).forEach(([date, set]) => {
-        finalMap[date] = Array.from(set);
-      });
-
-      setLessonNameMap(finalMap);
-      setLessonNameByScheduleId(lessonByScheduleId);
     };
 
     fetchData();
@@ -139,6 +145,19 @@ export default function AdminAllReservationPage() {
         .filter(s => s.date === formatDate(selectedDate))
         .sort((a, b) => a.time.localeCompare(b.time))
     : [];
+
+  // 初回読み込み中は中央にスピナー
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.halfCircleSpinner}>
+          <div className={`${styles.spinnerCircle} ${styles.spinnerCircle1}`}></div>
+          <div className={`${styles.spinnerCircle} ${styles.spinnerCircle2}`}></div>
+        </div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
