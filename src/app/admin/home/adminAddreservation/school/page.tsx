@@ -99,6 +99,18 @@ export default function AdminAddReservationPage() {
       }
     }
 
+     // ★追加：1回の登録操作につき1件だけ「更新イベント」を積む
+    if (successCount > 0) {
+      try {
+        await addDoc(collection(db, "lessonScheduleUpdates"), {
+          teacherId,
+          createdAt: Timestamp.now(),
+        });
+      } catch (e) {
+        console.error("lessonScheduleUpdates の作成に失敗しました", e);
+      }
+    }
+
     alert(`${successCount}件の予約枠を登録しました`);
     setSelectedDates([]);
     setTime("");

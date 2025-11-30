@@ -12,6 +12,9 @@ import {
 } from 'firebase/firestore';
 import styles from './page.module.css';
 
+// ★ 追加：通知用ヘルパー
+import { requestNotificationPermissionAndSaveToken } from '@/firebaseMessaging';
+
 type Teacher = {
   id: string;
   lessonName: string;
@@ -81,6 +84,15 @@ export default function UserMypage() {
     );
   };
 
+  // ★ 追加：通知ONボタン
+  const handleEnableNotification = async () => {
+    if (!userId) {
+      alert('ユーザー情報がありません');
+      return;
+    }
+    await requestNotificationPermissionAndSaveToken(userId);
+  };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.pageTitle}>こんにちは {originalName} さん</h1>
@@ -103,30 +115,42 @@ export default function UserMypage() {
       </div>
 
       <div className={styles.box}>
-          <h2 className={styles.subheading}>Myスクールを選択</h2>
-          <div className={styles.teacherSelectList}>
-            {teachers.map((teacher) => {
-              const selected = myTeachers.includes(teacher.id);
-              return (
-                <button
-                  key={teacher.id}
-                  className={`${styles.teacherButton} ${selected ? styles.selected : ''}`}
-                  onClick={() => toggleTeacher(teacher.id)}
-                  type="button"
-                >
-                  {teacher.lessonName}
-                </button>
-              );
-            })}
-          </div>
-          <button
-            className={styles.button}
-            onClick={handleSaveTeachers}
-            disabled={JSON.stringify(myTeachers) === JSON.stringify(savedTeachers)}
-          >
-            Myスクールを保存
-          </button>
+        <h2 className={styles.subheading}>Myスクールを選択</h2>
+        <div className={styles.teacherSelectList}>
+          {teachers.map((teacher) => {
+            const selected = myTeachers.includes(teacher.id);
+            return (
+              <button
+                key={teacher.id}
+                className={`${styles.teacherButton} ${selected ? styles.selected : ''}`}
+                onClick={() => toggleTeacher(teacher.id)}
+                type="button"
+              >
+                {teacher.lessonName}
+              </button>
+            );
+          })}
         </div>
+        <button
+          className={styles.button}
+          onClick={handleSaveTeachers}
+          disabled={JSON.stringify(myTeachers) === JSON.stringify(savedTeachers)}
+        >
+          Myスクールを保存
+        </button>
+      </div>
+
+      {/* ★ 追加：スクール通知設定 */}
+      <div className={styles.box}>
+        <h2 className={styles.subheading}>スクール通知設定</h2>
+        <button
+          className={styles.button}
+          type="button"
+          onClick={handleEnableNotification}
+        >
+          📲 通知を受け取る
+        </button>
+      </div>
     </div>
   );
 }

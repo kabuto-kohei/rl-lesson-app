@@ -1,5 +1,5 @@
 // src/firebase.ts
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -11,8 +11,15 @@ const firebaseConfig = {
   appId: "1:645336729788:web:4b1508d5104f22a6b1e8b9"
 };
 
-// Initialize Firebase App（すでに初期化されているか確認）
-const app = initializeApp(firebaseConfig);
+let app: FirebaseApp;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
 
-// Firestoreを使えるようにする
+// すでに使っている db はそのまま
 export const db = getFirestore(app);
+
+// Messaging 用に app も export しておく
+export const firebaseApp = app;
