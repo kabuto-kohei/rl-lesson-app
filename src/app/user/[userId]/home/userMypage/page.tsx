@@ -146,8 +146,7 @@ export default function UserMypage() {
         <button
           className={styles.button}
           type="button"
-          onClick={handleEnableNotification}
-        >
+          onClick={handleEnableNotification}>
           📲 通知を受け取る
         </button>
       </div>

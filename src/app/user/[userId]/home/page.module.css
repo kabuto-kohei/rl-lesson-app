@@ -37,25 +37,24 @@
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  min-height: 100vh;
+  align-items: stretch;
+  width: min(100%, var(--layout-page-max-width));
+  margin: 0 auto;
+  min-height: 100dvh;
   background-color: #f5f5f5;
-  padding-top: 120px;
-  padding-bottom: 60px;
+  padding: var(--header-offset) var(--layout-page-padding-x) var(--footer-escape);
+  gap: var(--layout-section-gap);
   position: relative;
 }
 
 /* ====== 通常の白背景ボックス ====== */
 .box {
-  max-width: 320px;
   width: 100%;
   background-color: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  margin-bottom: 24px;
-  box-sizing: border-box;
+  border-radius: var(--surface-card-radius);
+  border: var(--surface-card-border);
+  box-shadow: var(--surface-card-shadow);
+  padding: 18px;
 }
 
 /* ====== 見出し・サブ見出し ====== */
@@ -122,13 +121,17 @@
 .button {
   width: 100%;
   padding: 12px;
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+
+.button:last-child {
+  margin-bottom: 0;
 }
 
 /* ====== ボタン個別色 ====== */
@@ -162,4 +165,22 @@
 }
 .classSelectButton:hover {
   background-color: #4b5563;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 76px);
+  }
+
+  .box {
+    padding: 16px;
+  }
+
+  .heading {
+    font-size: 18px;
+  }
+
+  .subheading {
+    font-size: 15px;
+  }
 }

@@ -1,66 +1,71 @@
 .container {
-  max-width: 600px;
+  width: min(100%, var(--layout-page-max-width));
   margin: 0 auto;
-  padding: 64px 24px 64px;
-  font-family: sans-serif;
-  position: relative;
+  padding: 20px var(--layout-page-padding-x) var(--footer-escape);
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-section-gap);
   box-sizing: border-box;
 }
 
 .heading {
-  font-size: 20px;
-  font-weight: bold;
-  margin: 16px 0;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
   text-align: center;
+  color: #0f172a;
 }
 
 .selectBox {
   width: 100%;
-  padding: 10px;
+  padding: 11px;
   font-size: 16px;
-  margin-bottom: 16px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1e293b;
 }
 
 .button {
   padding: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #3b82f6;
-  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  background-color: #2563eb;
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.18s ease, opacity 0.18s ease;
   width: 100%;
-  margin-top: 16px;
 }
 
 .button:hover:enabled {
-  background-color: #2563eb;
+  background-color: #1d4ed8;
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .participatedButton {
   width: 100%;
   padding: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #9ca3af;
-  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  background-color: #94a3b8;
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: not-allowed;
-  margin-top: 16px;
 }
 
 .buttonGroup {
   display: flex;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 10px;
 }
 
-/* group内のボタンだけ均等幅 */
 .buttonGroup .button,
 .buttonGroup .absentButton {
   flex: 1;
@@ -68,93 +73,105 @@
 
 .absentButton {
   padding: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #d1d5db;
-  color: #333;
+  font-size: 15px;
+  font-weight: 700;
+  background-color: #e2e8f0;
+  color: #334155;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 16px;
-
+  transition: background-color 0.18s ease, opacity 0.18s ease;
 }
 
 .absentButton:hover:enabled {
-  background-color: #9ca3af;
+  background-color: #cbd5e1;
 }
 
 .absentButton:disabled {
-  background-color: #e5e7eb;
-  color: #999;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
-.calendarWrapper {
-  margin-top: 24px;
+.calendarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 10px;
   justify-content: center;
 }
 
 .legendItem {
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px;
+  color: #334155;
 }
 
-.circle {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+.circleDot {
   display: inline-block;
-  margin-right: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  margin-right: 6px;
+}
+
+.helperText {
+  margin: 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .detail {
-  margin-top: 24px;
-  padding: 16px;
-  background-color: #f9fafb;
-  border-radius: 8px;
+  border: 1px solid #dbe2ea;
+  padding: 14px;
+  background-color: #f8fafc;
+  border-radius: var(--surface-card-radius);
+  box-shadow: var(--surface-card-shadow);
 }
 
 .dateTitle {
-  font-weight: bold;
-  margin-bottom: 12px;
+  margin: 0 0 10px;
+  font-weight: 700;
+  text-align: center;
+  color: #0f172a;
 }
 
 .noReservation {
+  margin: 0;
   font-size: 14px;
-  color: #666;
+  color: #64748b;
+  text-align: center;
 }
 
 .reservationList {
   list-style: none;
   padding-left: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .reservationItem {
-  margin-bottom: 16px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
   background-color: #ffffff;
+  padding: 12px;
 }
 
 .reservationInfo {
   display: block;
-  margin-bottom: 2px; 
 }
 
 .row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -166,13 +183,14 @@
 }
 
 .timeAndCapacity {
-  font-weight: bold;
+  font-weight: 700;
   font-size: 14px;
+  color: #1e293b;
 }
 
 .lessonType {
   font-size: 13px;
-  color: #555;
+  color: #475569;
 }
 
 .lessonMark {
@@ -193,81 +211,85 @@
 }
 
 .fullLabel {
-  color: white;
-  background-color: red;
-  font-size: 12px;
-  padding: 2px 6px;
+  color: #ffffff;
+  background-color: #ef4444;
+  font-size: 11px;
+  padding: 2px 8px;
   margin-left: 8px;
-  border-radius: 4px;
-  font-weight: bold;
+  border-radius: 999px;
+  font-weight: 700;
 }
 
-/* 画面中央のフルスクリーン用ローディング */
 .loadingContainer {
+  min-height: 52vh;
+  width: min(100%, var(--layout-page-max-width));
+  margin: 0 auto;
+  padding: 24px var(--layout-page-padding-x);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
-  gap: 10px;
-  color: #555;
-  font-weight: bold;
 }
 
-/* カレンダー領域内のローディング（高さ控えめ） */
 .loadingBlock {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 240px;
-  gap: 10px;
-  color: #555;
-  font-weight: bold;
+  min-height: 180px;
+  padding: 8px 0;
 }
 
-/* ===== Half Circle Spinner ===== */
-.halfCircleSpinner,
-.halfCircleSpinner * {
-  box-sizing: border-box;
+@media (max-width: 768px) {
+  .container {
+    padding-top: 16px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .button,
+  .absentButton {
+    font-size: 14px;
+  }
 }
 
-.halfCircleSpinner {
-  width: 60px;
-  height: 60px;
-  border-radius: 100%;
-  position: relative;
+@media (max-width: 480px) {
+  .container {
+    padding-top: 14px;
+  }
+
+  .detail {
+    padding: 12px;
+  }
+
+  .reservationItem {
+    padding: 10px;
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+  }
+
+  .buttonGroup .button,
+  .buttonGroup .absentButton {
+    width: 100%;
+  }
+
+  .row {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .fullLabel {
+    display: inline-flex;
+    margin-left: 0;
+    margin-top: 4px;
+  }
 }
 
-.circle {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 100%;
-  border: calc(60px / 10) solid transparent;
-}
-
-.circle1 {
-  border-top-color: #3b82f6;
-  animation: half-circle-spinner-animation 1s infinite;
-}
-
-.circle2 {
-  border-bottom-color: #3b82f6;
-  animation: half-circle-spinner-animation 1s infinite alternate;
-}
-
-@keyframes half-circle-spinner-animation {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 既存の凡例ドットと被らないよう別クラス名 */
-.circleDot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 9999px;
-  margin-right: 6px;
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .absentButton {
+    transition: none;
+  }
 }
