@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   collection,
   getDocs,
@@ -12,10 +12,18 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/firebase';
 import Calendar from '@/app/component/Calendar/Calendar';
+import LoadingProgress from '@/app/component/LoadingProgress/LoadingProgress';
+import FadeInSection from '@/app/component/motion/FadeInSection';
 import styles from './page.module.css';
 import { useParams } from 'next/navigation';
 import { Timestamp } from 'firebase/firestore';
 import lessonColorPalette from "@/app/component/lessonColer/lessonColors";
+import { resolveUserId } from '@/lib/session/resolveUserId';
+import {
+  resolveActorIdentity,
+  resolveActorKeyForWrite,
+} from '@/lib/session/resolveActorIdentity';
+import { buildMonthDateRange } from '@/lib/date/monthDateRange';
 
 type Teacher = {
   id: string;
@@ -35,9 +43,15 @@ type Schedule = {
   createdAt?: { toDate: () => Date };
 };
 
+type LoadingState = {
+  progress: number;
+  label: string;
+};
+
 export default function UserClassSelectPage() {
   const params = useParams();
-  const userId = typeof params.userId === 'string' ? params.userId : '';
+  const userId = resolveUserId(params.userId);
+  const { actorKey } = resolveActorIdentity();
 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
@@ -53,6 +67,14 @@ export default function UserClassSelectPage() {
   // ローディング状態
   const [loadingTeachers, setLoadingTeachers] = useState<boolean>(true);
   const [loadingSchedules, setLoadingSchedules] = useState<boolean>(false);
+  const [teacherLoadingState, setTeacherLoadingState] = useState<LoadingState>({
+    progress: 20,
+    label: '講師情報を読み込んでいます',
+  });
+  const [scheduleLoadingState, setScheduleLoadingState] = useState<LoadingState>({
+    progress: 20,
+    label: '日程を読み込んでいます',
+  });
 
   // 連打ガード
   const [busySet, setBusySet] = useState<Set<string>>(new Set());
@@ -73,6 +95,7 @@ export default function UserClassSelectPage() {
   useEffect(() => {
     const fetchTeachers = async () => {
       setLoadingTeachers(true);
+      setTeacherLoadingState({ progress: 20, label: '講師情報を読み込んでいます' });
       try {
         const snapshot = await getDocs(collection(db, 'teacherId'));
         const data = snapshot.docs
@@ -86,6 +109,7 @@ export default function UserClassSelectPage() {
           })
           .filter((teacher) => teacher.classType !== '体験クラス');
         setTeachers(data);
+        setTeacherLoadingState({ progress: 100, label: '講師情報を読み込んでいます' });
       } finally {
         setLoadingTeachers(false);
       }
@@ -99,27 +123,26 @@ export default function UserClassSelectPage() {
       arr.slice(i * size, (i + 1) * size)
     );
 
-  const handleSubmit = async () => {
-    if (!selectedTeacherId) {
-      alert('クラスを選択してください');
-      return;
-    }
-    setShowCalendar(true);
-    setSelectedDate(null);
+  const fetchSchedulesForMonth = useCallback(async (targetTeacherId: string) => {
     setLoadingSchedules(true);
-
+    setScheduleLoadingState({ progress: 20, label: '日程を読み込んでいます' });
     try {
-      // 対象講師のスケジュール取得
-      const qSchedules = query(
-        collection(db, 'lessonSchedules'),
-        where('teacherId', '==', selectedTeacherId)
+      const { monthStart, monthEnd } = buildMonthDateRange(year, month);
+      const scheduleSnap = await getDocs(
+        query(
+          collection(db, 'lessonSchedules'),
+          where('date', '>=', monthStart),
+          where('date', '<=', monthEnd)
+        )
       );
-      const scheduleSnap = await getDocs(qSchedules);
       const scheduleList = (scheduleSnap.docs.map((d) => ({
         id: d.id,
         ...d.data(),
-      })) as Schedule[]).filter((s) => s.classType !== '体験クラス');
+      })) as Schedule[]).filter(
+        (s) => s.teacherId === targetTeacherId && s.classType !== '体験クラス'
+      );
       setSchedules(scheduleList);
+      setScheduleLoadingState({ progress: 55, label: '参加状況を集計しています' });
 
       // --- 出席人数（isAbsent:false）のユーザー去重 & 自分の参加済み去重 ---
       const attendanceSets: Record<string, Set<string>> = {}; // scheduleId -> Set<userId>
@@ -134,15 +157,25 @@ export default function UserClassSelectPage() {
           );
           const partSnap = await getDocs(qPart);
           partSnap.docs.forEach((d) => {
-            const data = d.data() as { userId: string; scheduleId: string; isAbsent?: boolean };
+            const data = d.data() as {
+              userId?: string;
+              actorKey?: string;
+              scheduleId: string;
+              isAbsent?: boolean;
+            };
             const sid = data.scheduleId;
 
-            if (data.userId === userId) {
+            const isJoinedByActorKey = !!actorKey && data.actorKey === actorKey;
+            const isJoinedByLegacyUserId = data.userId === userId;
+            if (isJoinedByActorKey || isJoinedByLegacyUserId) {
               participatedIdsSet.add(sid);
             }
             if (!data.isAbsent) {
               if (!attendanceSets[sid]) attendanceSets[sid] = new Set();
-              attendanceSets[sid].add(data.userId);
+              const attendanceKey = data.actorKey ?? data.userId;
+              if (attendanceKey) {
+                attendanceSets[sid].add(attendanceKey);
+              }
             }
           });
         }
@@ -155,6 +188,7 @@ export default function UserClassSelectPage() {
 
       setParticipatedScheduleIds(Array.from(participatedIdsSet));
       setAttendanceMap(attendanceCounter);
+      setScheduleLoadingState({ progress: 85, label: '表示を準備しています' });
 
       // カレンダーの◯色用：date → lessonName[] マップ
       const tempMap: Record<string, Set<string>> = {};
@@ -174,9 +208,28 @@ export default function UserClassSelectPage() {
         finalMap[date] = Array.from(set);
       });
       setLessonNameMap(finalMap);
+      setScheduleLoadingState({ progress: 100, label: '表示を準備しています' });
     } finally {
       setLoadingSchedules(false);
     }
+  }, [actorKey, month, userId, year]);
+
+  useEffect(() => {
+    if (!showCalendar || !selectedTeacherId) return;
+    fetchSchedulesForMonth(selectedTeacherId);
+  }, [fetchSchedulesForMonth, selectedTeacherId, showCalendar]);
+
+  const handleSubmit = async () => {
+    if (!selectedTeacherId) {
+      alert('クラスを選択してください');
+      return;
+    }
+    setSelectedDate(null);
+    if (!showCalendar) {
+      setShowCalendar(true);
+      return;
+    }
+    await fetchSchedulesForMonth(selectedTeacherId);
   };
 
   const handleParticipate = async (scheduleId: string) => {
@@ -184,6 +237,7 @@ export default function UserClassSelectPage() {
       alert('ユーザーIDが見つかりません');
       return;
     }
+    const actorKeyForWrite = resolveActorKeyForWrite(userId);
     if (participatedScheduleIds.includes(scheduleId)) {
       alert('すでに登録済みです');
       return;
@@ -213,6 +267,7 @@ export default function UserClassSelectPage() {
         doc(db, 'participations', `${scheduleId}_${userId}`),
         {
           userId,
+          actorKey: actorKeyForWrite,
           scheduleId,
           isAbsent: false,
           createdAt: Timestamp.now(),
@@ -242,6 +297,7 @@ export default function UserClassSelectPage() {
           doc(db, 'participations', `${scheduleId}_${userId}`),
           {
             userId,
+            actorKey: actorKeyForWrite,
             scheduleId,
             isAbsent: true,
             createdAt: Timestamp.now(),
@@ -268,6 +324,7 @@ export default function UserClassSelectPage() {
       alert('ユーザーIDが見つかりません');
       return;
     }
+    const actorKeyForWrite = resolveActorKeyForWrite(userId);
     if (participatedScheduleIds.includes(scheduleId)) {
       alert('すでに登録済みです');
       return;
@@ -278,6 +335,7 @@ export default function UserClassSelectPage() {
         doc(db, 'participations', `${scheduleId}_${userId}`),
         {
           userId,
+          actorKey: actorKeyForWrite,
           scheduleId,
           isAbsent: true,
           createdAt: Timestamp.now(),
@@ -331,11 +389,7 @@ export default function UserClassSelectPage() {
   if (loadingTeachers) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.halfCircleSpinner}>
-          <div className={styles.circle + ' ' + styles.circle1}></div>
-          <div className={styles.circle + ' ' + styles.circle2}></div>
-        </div>
-        <p>Loading...</p>
+        <LoadingProgress progress={teacherLoadingState.progress} label={teacherLoadingState.label} />
       </div>
     );
   }
@@ -373,14 +427,13 @@ export default function UserClassSelectPage() {
       {showCalendar && (
         loadingSchedules ? (
           <div className={styles.loadingBlock}>
-            <div className={styles.halfCircleSpinner}>
-              <div className={styles.circle + ' ' + styles.circle1}></div>
-              <div className={styles.circle + ' ' + styles.circle2}></div>
-            </div>
-            <p>Loading...</p>
+            <LoadingProgress
+              progress={scheduleLoadingState.progress}
+              label={scheduleLoadingState.label}
+            />
           </div>
         ) : (
-          <>
+          <div className={styles.calendarSection}>
             <Calendar
               year={year}
               month={month}
@@ -407,62 +460,68 @@ export default function UserClassSelectPage() {
               </div>
             )}
 
-            {selectedDate && (
-              <div className={styles.detail}>
-                <p className={styles.dateTitle}>
-                  {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
-                </p>
-
-                {filteredSchedules.length === 0 ? (
-                  <p className={styles.noReservation}>この日のスケジュールはありません</p>
-                ) : (
-                  <ul className={styles.reservationList}>
-                    {filteredSchedules.map((s) => {
-                      const currentAttend = attendanceMap[s.id] || 0;
-                      const isFull = currentAttend >= s.capacity;
-                      const alreadyJoined = participatedScheduleIds.includes(s.id);
-                      const isBusy = busySet.has(s.id);
-
-                      return (
-                        <li key={s.id} className={styles.reservationItem}>
-                          <div className={styles.reservationInfo}>
-                            <div className={styles.row}>
-                              <div className={styles.timeAndCapacity}>
-                                {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - currentAttend)}名）
-                                {isFull && <span className={styles.fullLabel}>満員</span>}
-                              </div>
-                              <div className={styles.lessonType}>
-                                {getLessonTypeLabel(s.lessonType)}
-                              </div>
-                            </div>
-                            {s.memo && (
-                              <div className={styles.memo}>メモ：{s.memo}</div>
-                            )}
-                          </div>
-                          <div className={styles.buttonGroup}>
-                            <button
-                              className={styles.button}
-                              onClick={() => withBusy(s.id, () => handleParticipate(s.id))}
-                              disabled={alreadyJoined || isFull || isBusy}
-                            >
-                              {isBusy ? '処理中…' : '参加する'}
-                            </button>
-                            <button
-                              className={styles.absentButton}
-                              onClick={() => withBusy(s.id, () => handleAbsent(s.id))}
-                              disabled={alreadyJoined || isBusy}
-                            >
-                              {isBusy ? '処理中…' : 'おやすみ'}
-                            </button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+            {!selectedDate && (
+              <p className={styles.helperText}>日付を選ぶと詳細が表示されます。</p>
             )}
-          </>
+
+            {selectedDate && (
+              <FadeInSection>
+                <div className={styles.detail}>
+                  <p className={styles.dateTitle}>
+                    {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
+                  </p>
+
+                  {filteredSchedules.length === 0 ? (
+                    <p className={styles.noReservation}>この日のスケジュールはありません</p>
+                  ) : (
+                    <ul className={styles.reservationList}>
+                      {filteredSchedules.map((s) => {
+                        const currentAttend = attendanceMap[s.id] || 0;
+                        const isFull = currentAttend >= s.capacity;
+                        const alreadyJoined = participatedScheduleIds.includes(s.id);
+                        const isBusy = busySet.has(s.id);
+
+                        return (
+                          <li key={s.id} className={styles.reservationItem}>
+                            <div className={styles.reservationInfo}>
+                              <div className={styles.row}>
+                                <div className={styles.timeAndCapacity}>
+                                  {s.time}｜定員：{s.capacity}（あと {Math.max(0, s.capacity - currentAttend)}名）
+                                  {isFull && <span className={styles.fullLabel}>満員</span>}
+                                </div>
+                                <div className={styles.lessonType}>
+                                  {getLessonTypeLabel(s.lessonType)}
+                                </div>
+                              </div>
+                              {s.memo && (
+                                <div className={styles.memo}>メモ：{s.memo}</div>
+                              )}
+                            </div>
+                            <div className={styles.buttonGroup}>
+                              <button
+                                className={styles.button}
+                                onClick={() => withBusy(s.id, () => handleParticipate(s.id))}
+                                disabled={alreadyJoined || isFull || isBusy}
+                              >
+                                {isBusy ? '処理中…' : '参加する'}
+                              </button>
+                              <button
+                                className={styles.absentButton}
+                                onClick={() => withBusy(s.id, () => handleAbsent(s.id))}
+                                disabled={alreadyJoined || isBusy}
+                              >
+                                {isBusy ? '処理中…' : 'おやすみ'}
+                              </button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </FadeInSection>
+            )}
+          </div>
         )
       )}
     </div>

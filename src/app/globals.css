@@ -1,24 +1,60 @@
-/* 全体を白背景・黒字に */
 :root {
   --background: #ffffff;
   --foreground: #000000;
+
+  --layout-page-max-width: 720px;
+  --layout-page-padding-x: clamp(14px, 4vw, 24px);
+  --layout-section-gap: clamp(12px, 3vw, 20px);
+  --surface-card-radius: 14px;
+  --surface-card-border: 1px solid #e2e8f0;
+  --surface-card-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --footer-height: calc(68px + env(safe-area-inset-bottom, 0px));
+  --footer-escape: calc(var(--footer-height) + 16px);
+  --header-offset: calc(env(safe-area-inset-top, 0px) + 84px);
 }
 
 @media (prefers-color-scheme: dark) {
-  /* ダークモードでも白背景・黒字を強制する */
   :root {
     --background: #ffffff;
     --foreground: #000000;
   }
 }
 
+html {
+  min-height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  background: var(--background); /* 白背景 */
-  color: var(--foreground);      /* 黒文字 */
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
   font-family: Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
 }
 
 .page-wrapper {
-  min-height: 100vh;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom, 30px)); /* フッター分の余白確保 */
+  min-height: 100dvh;
+  padding-bottom: var(--footer-escape);
 }
