@@ -169,7 +169,8 @@
 
 @media (max-width: 480px) {
   .container {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 76px);
+    /* iPhone PWA/Safari では fixed header が高くなるため上余白を拡張 */
+    padding-top: calc(env(safe-area-inset-top, 0px) + 112px);
   }
 
   .box {
