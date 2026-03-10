@@ -1,7 +1,8 @@
 .container {
   width: min(100%, var(--layout-page-max-width));
   margin: 0 auto;
-  padding: 20px var(--layout-page-padding-x) var(--footer-escape);
+  min-height: calc(100dvh - var(--footer-height));
+  padding: var(--layout-page-padding-y) var(--layout-page-padding-x) calc(var(--footer-escape) + 8px);
   display: flex;
   flex-direction: column;
   gap: var(--layout-section-gap);
@@ -95,7 +96,7 @@
 .calendarSection {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .legend {
@@ -129,7 +130,7 @@
 
 .detail {
   border: 1px solid #dbe2ea;
-  padding: 14px;
+  padding: 16px;
   background-color: #f8fafc;
   border-radius: var(--surface-card-radius);
   box-shadow: var(--surface-card-shadow);
@@ -162,7 +163,7 @@
   border: 1px solid #dbe2ea;
   border-radius: 12px;
   background-color: #ffffff;
-  padding: 12px;
+  padding: 14px;
 }
 
 .reservationInfo {

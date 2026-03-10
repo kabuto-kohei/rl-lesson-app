@@ -130,7 +130,9 @@ export default function AdminMypagePage() {
         const users: Record<string, string> = {};
         userSnap.docs.forEach((d) => {
           const u = d.data() as Partial<User>;
-          users[d.id] = u.name || '名前不明';
+          const displayName = u.name || '名前不明';
+          users[d.id] = displayName;
+          users[`u:${d.id}`] = displayName;
         });
         setUserMap(users);
 
@@ -229,6 +231,20 @@ export default function AdminMypagePage() {
     [sortedSchedules, selectedDate]
   );
   const reservedDates = useMemo(() => Object.keys(lessonNameMap), [lessonNameMap]);
+  const resolveParticipantName = (participantKey: string) => {
+    if (userMap[participantKey]) {
+      return userMap[participantKey];
+    }
+
+    if (participantKey.startsWith('u:')) {
+      const legacyUserId = participantKey.slice(2);
+      if (legacyUserId && userMap[legacyUserId]) {
+        return userMap[legacyUserId];
+      }
+    }
+
+    return '名前不明';
+  };
 
   if (loading) {
     return (
@@ -293,7 +309,7 @@ export default function AdminMypagePage() {
                 <p className={styles.label}>参加者：</p>
                 <ul className={styles.participants}>
                   {attendance.map((participantKey) => (
-                    <li key={participantKey}>{userMap[participantKey] || '名前不明'}</li>
+                    <li key={participantKey}>{resolveParticipantName(participantKey)}</li>
                   ))}
                 </ul>
                 {absentees.length > 0 && (
@@ -301,7 +317,7 @@ export default function AdminMypagePage() {
                     <p className={styles.label}>おやすみ：</p>
                     <ul className={styles.participants}>
                       {absentees.map((participantKey) => (
-                        <li key={participantKey}>{userMap[participantKey] || '名前不明'}</li>
+                        <li key={participantKey}>{resolveParticipantName(participantKey)}</li>
                       ))}
                     </ul>
                   </>

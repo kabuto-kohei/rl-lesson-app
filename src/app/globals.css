@@ -4,13 +4,14 @@
 
   --layout-page-max-width: 720px;
   --layout-page-padding-x: clamp(14px, 4vw, 24px);
+  --layout-page-padding-y: clamp(20px, 3vw, 28px);
   --layout-section-gap: clamp(12px, 3vw, 20px);
   --surface-card-radius: 14px;
   --surface-card-border: 1px solid #e2e8f0;
   --surface-card-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   --footer-height: calc(68px + env(safe-area-inset-bottom, 0px));
-  --footer-escape: calc(var(--footer-height) + 16px);
-  --header-offset: calc(env(safe-area-inset-top, 0px) + 84px);
+  --footer-escape: calc(var(--footer-height) + 24px);
+  --header-offset: calc(env(safe-area-inset-top, 0px) + 96px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,6 +23,8 @@
 
 html {
   min-height: 100%;
+  scroll-padding-top: var(--header-offset);
+  scroll-padding-bottom: var(--footer-escape);
 }
 
 *,
