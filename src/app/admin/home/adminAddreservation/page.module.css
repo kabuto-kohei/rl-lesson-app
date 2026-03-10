@@ -1,8 +1,9 @@
 .container {
-  padding: 24px;
-  max-width: 600px;
+  width: min(100%, 600px);
+  padding: var(--layout-page-padding-y) var(--layout-page-padding-x) calc(var(--footer-escape) + 8px);
   margin: 0 auto;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .heading {

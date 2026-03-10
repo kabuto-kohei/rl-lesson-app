@@ -1,7 +1,8 @@
 .container {
   width: min(100%, var(--layout-page-max-width));
   margin: 0 auto;
-  padding: 20px var(--layout-page-padding-x) var(--footer-escape);
+  min-height: calc(100dvh - var(--footer-height));
+  padding: var(--layout-page-padding-y) var(--layout-page-padding-x) calc(var(--footer-escape) + 8px);
   display: flex;
   flex-direction: column;
   gap: var(--layout-section-gap);
@@ -17,6 +18,7 @@
 
 .calendarWrapper {
   width: 100%;
+  margin-bottom: 2px;
 }
 
 .helperText {
@@ -36,7 +38,7 @@
   background-color: #fff;
   border: 1px solid #dbe2ea;
   border-radius: var(--surface-card-radius);
-  padding: 14px;
+  padding: 16px;
   box-shadow: var(--surface-card-shadow);
 }
 
@@ -98,10 +100,14 @@
 
 .participants {
   list-style: none;
-  padding-left: 1rem;
+  padding-left: 1.15rem;
   margin: 0;
   font-size: 14px;
   color: #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere;
 }
 
 .fullLabel {
@@ -193,10 +199,6 @@
 }
 
 @media (max-width: 768px) {
-  .container {
-    padding-top: 16px;
-  }
-
   .heading {
     font-size: 21px;
   }
@@ -207,16 +209,16 @@
 }
 
 @media (max-width: 480px) {
-  .container {
-    padding-top: 14px;
-  }
-
   .heading {
     font-size: 20px;
   }
 
   .card {
     padding: 12px;
+  }
+
+  .participants {
+    padding-left: 1rem;
   }
 
   .actionRow {

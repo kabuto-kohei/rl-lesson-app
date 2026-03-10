@@ -1,10 +1,11 @@
 .container {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 24px;
-    background: white;
-    border-radius: 16px;
-  }
+  width: min(100%, 480px);
+  margin: var(--layout-page-padding-y) auto calc(var(--footer-escape) + 8px);
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
   
   .heading {
     font-size: 20px;
